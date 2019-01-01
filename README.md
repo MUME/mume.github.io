@@ -1,10 +1,14 @@
-MUME Open Source Projects
+Projects
 =======
-
-What is MUME?
--------
-MUME is a free multiplayer roleplaying game based upon J.R.R. Tolkien's Middle-earth that has been continuously enhanced since fall '91. MUME stands for Multi-Users in Middle-earth.
 
 MMapper
 -------
 [MMapper is a mud mapper especially written for the mud MUME](https://mume.github.io/MMapper/)
+
+PowTTY
+-------
+[PowTTY is a MUD telnet client for PC/Windows, based on both PuTTY (telnet/ssh), and unix-based " powwow " (pure MUD)](http://www.elvenrunes.com/powtty/)
+
+Powwow
+-------
+[powwow is a client program, which replaces telnet for the lazy mudder who wants some (only some?) extra features](https://www.hoopajoo.net/projects/powwow.html)
