@@ -73,12 +73,13 @@ onUnmounted(() => {
           <a href="https://mume.org/play/">Play<img alt="Play" height="16" width="16" style="padding-left:4px; vertical-align:-10%;" :src="withBase('/favicon.ico')"></a>
         </li>
         <li class="has_children">
-          <a :href="withBase('/')" :class="{ current: vpRoute.path === '/' || vpRoute.path === '/index.html' }">Community<span class="caret down"></span></a>
+          <a :href="withBase('/')" :class="{ current: vpRoute.path === '/' || vpRoute.path === '/index.html' || vpRoute.path.startsWith(withBase('/opensource')) || vpRoute.path.startsWith(withBase('/links')) || vpRoute.path.startsWith(withBase('/interviews')) }">Community<span class="caret down"></span></a>
           <ul>
             <li><a href="https://discord.gg/XkZN55am9a" target="_blank" rel="noopener">Discord <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
-            <li><a href="http://www.elvenrunes.com" target="_blank" rel="noopener">Elvenrunes <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
-            <li><a :href="withBase('/links')">Links</a></li>
-            <li><a :href="withBase('/interviews')">Interviews</a></li>
+            <li><a href="https://elvenrunes.com" target="_blank" rel="noopener">Elvenrunes <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+            <li><a :href="withBase('/opensource')" :class="{ current: vpRoute.path.startsWith(withBase('/opensource')) }">Open Source</a></li>
+            <li><a :href="withBase('/links')" :class="{ current: vpRoute.path.startsWith(withBase('/links')) }">Links</a></li>
+            <li><a :href="withBase('/interviews')" :class="{ current: vpRoute.path.startsWith(withBase('/interviews')) }">Interviews</a></li>
             <li><a href="https://mume.org/wiki/">Wiki</a></li>
           </ul>
         </li>

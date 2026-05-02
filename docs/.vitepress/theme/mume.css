@@ -935,7 +935,7 @@ a:hover {
 }
 
 /* Shared Page Layouts */
-.home, .links, .interviews {
+.home, .links, .interviews, .opensource {
   padding: 1rem;
 }
 
@@ -948,6 +948,9 @@ a:hover {
   max-width: 100%;
   height: auto;
   border-radius: 4px;
+  max-height: 400px;
+  object-fit: cover;
+  width: 100%;
 }
 
 .intro {
@@ -992,10 +995,40 @@ a:hover {
   padding: 1.5rem;
 }
 
-.interviews-list {
+.interviews-list, .community-grid {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+}
+
+.community-section {
+  padding: 1rem 0;
+}
+
+.discord-widget-container {
+  margin: 1.5rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #262626;
+}
+
+.youtube-container {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+  height: 0;
+  margin: 1.5rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #262626;
+}
+
+.youtube-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .interview-card {
@@ -1045,4 +1078,45 @@ a:hover {
 
 h1, h2 {
   text-align: center;
+}
+
+/* Community Links Table */
+.links-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0 2.5rem;
+  font-size: 0.95rem;
+}
+
+.links-table th, .links-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #333;
+}
+
+.links-table th {
+  background-color: #1a1a1a;
+  color: goldenrod;
+  font-family: 'Kelt', serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.links-table tr:hover {
+  background-color: #111;
+}
+
+.links-table td:first-child {
+  white-space: nowrap;
+  font-weight: bold;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+@media (max-width: 650px) {
+  .links-table td:first-child {
+    white-space: normal;
+  }
 }

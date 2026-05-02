@@ -4,7 +4,7 @@ title: Player Interviews
 
 <div class="interviews">
   <div class="center-img">
-    <img src="../assets/images/fellowship_bw.jpg" alt="The Fellowship" class="banner-img" />
+    <img src="../assets/images/gandalf.jpg" alt="Gandalf" class="banner-img" />
   </div>
 
   <h1>Player Interviews</h1>
