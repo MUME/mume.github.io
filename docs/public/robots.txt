@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://docs.mume.org/sitemap.xml
+Sitemap: https://docs.mume.org/sitemap_index.xml
+
