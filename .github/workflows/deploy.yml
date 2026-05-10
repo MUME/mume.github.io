@@ -187,22 +187,11 @@ jobs:
 
                 const owner = context.repo.owner;
                 const repo = context.repo.repo;
-                let baseUrlPath = process.env.BASE_URL_PATH;
+                const baseUrlPath = process.env.BASE_URL_PATH;
 
                 let base = `https://${owner}.github.io`;
-
-                const cnamePath = 'CNAME';
-                if (fs.existsSync(cnamePath) && owner === 'mume') {
-                  const domain = fs.readFileSync(cnamePath, 'utf8').trim();
-                  if (domain) {
-                    base = `https://${domain}`;
-                  }
-                } else {
-                  const repo = context.repo.repo;
-                  if (repo !== `${owner}.github.io`) {
-                    base = `${base}/${repo}`;
-                  }
-                }
+                const normalizedPath = baseUrlPath.startsWith('/') ? baseUrlPath : `/${baseUrlPath}`;
+                base = `${base}${normalizedPath}`.replace(/\/$/, '');
 
                 const url = `${base}/pr-${pr.number}/`;
                 console.log(`Deployment URL for PR #${pr.number}: ${url}`);
