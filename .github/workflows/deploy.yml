@@ -53,7 +53,7 @@ jobs:
           npm run build
           if [ -f CNAME ] && [ "${{ github.repository_owner }}" = "mume" ]; then cp CNAME dist/CNAME; fi
         env:
-          VITE_BASE: ${{ steps.pages.outputs.base_path }}/
+          VITE_BASE: ${{ env.VITE_BASE || format('{0}/', steps.pages.outputs.base_path) }}
 
       - name: Collect PRs to deploy
         uses: actions/github-script@v9
