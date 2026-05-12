@@ -9,7 +9,8 @@ REPO=$(echo "${GITHUB_REPOSITORY:-${OWNER}/mume.github.io}" | cut -d'/' -f2)
 
 # Set VITE_HOSTNAME from CNAME file if it exists
 if [ -f CNAME ] && [ "$OWNER" = "mume" ]; then
-  export VITE_HOSTNAME="https://$(cat CNAME | tr -d '[:space:]')"
+  CNAME_VAL=$(tr -d '[:space:]' < CNAME)
+  export VITE_HOSTNAME="https://$CNAME_VAL"
 else
   # Fallback for PR previews if host/prefix are provided via env
   if [ -n "$PREVIEW_HOST" ]; then
