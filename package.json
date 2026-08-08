@@ -12,7 +12,7 @@
     "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
-    "vue": "^3.5.40"
+    "vue": "^3.5.41"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
