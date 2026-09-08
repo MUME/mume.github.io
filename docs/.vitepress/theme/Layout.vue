@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useData, useRoute, withBase } from 'vitepress'
+import CookieConsent from './components/CookieConsent.vue'
 import gandalfImg from './gandalf_90.gif'
 import gandalfImg2x from './gandalf_90@2x.gif'
 import './mume.css'
@@ -153,5 +154,8 @@ onUnmounted(() => {
         MUME is hosted at <a href="https://www.heig-vd.ch" target="_blank" rel="noopener">HEIG-VD</a> (School of Engineering and Management Vaud, Switzerland).
       </div>
     </footer>
+
+    <!-- Cookie Consent Banner Component -->
+    <CookieConsent />
   </div>
 </template>
