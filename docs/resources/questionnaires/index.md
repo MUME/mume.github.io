@@ -13,13 +13,13 @@ Over MUME's history, the administration conducted comprehensive player questionn
 
 <div class="interviews-list" style="margin-top: 2rem;">
 
-<a href="./2024-03" class="card interview-card">
+<a href="https://lookerstudio.google.com/reporting/3ee7c0b0-3eb6-4191-87a3-eec325e6488d/page/B99yD" target="_blank" rel="noopener noreferrer" class="card interview-card">
   <div class="interview-info">
     <h3>March 2024 Questionnaire & Poll</h3>
     <p class="meta">By Rogon & Dáin &bull; March 2024</p>
     <p style="margin-top: 0.5rem; color: silver; font-size: 0.9rem;">Interactive reporting on Looker Studio, covering contemporary player feedback and follow-up in-game polls.</p>
   </div>
-  <span class="read-more">View Results</span>
+  <span class="read-more">View on Looker Studio ↗</span>
 </a>
 
 <a href="./2000-04" class="card interview-card">
