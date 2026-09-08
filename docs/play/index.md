@@ -33,11 +33,11 @@ There are three ways to join the battle for Middle-earth:
   <p>The web client is the least friction option, recommended if you want to get a quick feel of the game. You get the full power of a real-time map with no installation required. Also, it should work from most corporate, library, and school networks.</p>
 
   <div class="playnow">
-    <a href="https://mume.org/play/browser" target="_self" rel="external">Play with MMapper Web</a>
+    <a href="./browser">Play with MMapper Web</a>
   </div>
 
   <div style="text-align: center; margin: 1.5rem 0;">
-    <a href="https://mume.org/play/browser" target="_self" rel="external">
+    <a href="./browser">
       <img src="/assets/images/playmume.png" srcset="/assets/images/playmume.png 1x, /assets/images/playmume@2x.png 2x, /assets/images/mmapper-wasm@2x.webp 2x" alt="Play MUME for free using the web client" style="width: 100%; max-width: 924px; height: auto;" />
     </a>
   </div>

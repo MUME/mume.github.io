@@ -23,12 +23,13 @@ description: Contents of the Multi-Users in Middle-earth Website.
 - <a href="https://mume.org/search" target="_self" rel="external">Search</a>
 
 ### MUME Boards
+- [Boards Overview](/resources/boards/)
 - <a href="https://mume.org/news/game/" target="_self" rel="external">The Game News Board</a>
-- <a href="https://mume.org/resources/boards/Starter's/" target="_self" rel="external">The Starter's Board</a>
-- <a href="https://mume.org/resources/boards/FAQ/" target="_self" rel="external">FAQ Board</a>
-- <a href="https://mume.org/resources/boards/Tales/" target="_self" rel="external">The Tales Board (MUME fun)</a>
-- <a href="https://mume.org/resources/boards/InCharacter/" target="_self" rel="external">Free People Chronicles</a>
-- <a href="https://mume.org/resources/boards/OrcsIncharacter/" target="_self" rel="external">Orkish Drumlore</a>
+- <a href="https://mume.org/resources/boards/starters/" target="_self" rel="external">The Starter's Board</a>
+- <a href="https://mume.org/resources/boards/faq/" target="_self" rel="external">FAQ Board</a>
+- <a href="https://mume.org/resources/boards/tales/" target="_self" rel="external">The Tales Board (MUME fun)</a>
+- <a href="https://mume.org/resources/boards/in-character/" target="_self" rel="external">Free People Chronicles</a>
+- <a href="https://mume.org/resources/boards/orcs-incharacter/" target="_self" rel="external">Orkish Drumlore</a>
 
 ### Playing
 - Via telnet at `mume.org` port `23` or `4242`
