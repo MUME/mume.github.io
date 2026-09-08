@@ -5,58 +5,55 @@ import { withBase } from 'vitepress'
 // destination for the "first time" path — the interactive tutorial (external app)
 const tutorialUrl = 'https://mume-preview.mume-idea-submission.workers.dev'
 const fellowship = withBase('/assets/images/fellowship_bw.jpg')
-const root = ref(null)
+
+const expanded = ref(false)
+const bgRef = ref(null)
+
+function toggleMore() {
+  expanded.value = !expanded.value
+  if (expanded.value) {
+    setTimeout(() => {
+      const md = document.querySelector('.play-chooser .more-details')
+      if (md) md.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }, 320)
+  }
+}
+function tilt(e) {
+  const card = e.currentTarget
+  const r = card.getBoundingClientRect()
+  const x = (e.clientX - r.left) / r.width - 0.5
+  const y = (e.clientY - r.top) / r.height - 0.5
+  card.style.transform = `translateY(-6px) scale(1.015) rotateX(${(-y * 6).toFixed(2)}deg) rotateY(${(x * 7).toFixed(2)}deg)`
+}
+function untilt(e) { e.currentTarget.style.transform = '' }
 
 onMounted(() => {
-  const el = root.value
-  // drifting embers
-  const bg = el.querySelector('.pc-bg')
+  const bg = bgRef.value
+  if (!bg) return
   for (let i = 0; i < 24; i++) {
-    const e = document.createElement('div')
-    e.className = 'pc-ember'
+    const el = document.createElement('div')
+    el.className = 'pc-ember'
     const s = 2 + Math.random() * 3
-    e.style.width = e.style.height = s + 'px'
-    e.style.left = Math.random() * 100 + '%'
-    e.style.setProperty('--dx', (Math.random() * 120 - 60) + 'px')
-    e.style.animationDuration = (6 + Math.random() * 7) + 's'
-    e.style.animationDelay = (Math.random() * 8) + 's'
-    bg.appendChild(e)
+    el.style.width = el.style.height = s + 'px'
+    el.style.left = Math.random() * 100 + '%'
+    el.style.setProperty('--dx', (Math.random() * 120 - 60) + 'px')
+    el.style.animationDuration = (6 + Math.random() * 7) + 's'
+    el.style.animationDelay = (Math.random() * 8) + 's'
+    bg.appendChild(el)
   }
-  // subtle cursor tilt on the choice cards
-  el.querySelectorAll('.choice').forEach(card => {
-    card.addEventListener('mousemove', ev => {
-      const r = card.getBoundingClientRect()
-      const x = (ev.clientX - r.left) / r.width - 0.5
-      const y = (ev.clientY - r.top) / r.height - 0.5
-      card.style.transform = `translateY(-6px) scale(1.015) rotateX(${(-y * 6).toFixed(2)}deg) rotateY(${(x * 7).toFixed(2)}deg)`
-    })
-    card.addEventListener('mouseleave', () => { card.style.transform = '' })
-  })
-  // "every way to play" expander (collapsed by default)
-  const mt = el.querySelector('.more-toggle')
-  const md = el.querySelector('.more-details')
-  mt.addEventListener('click', () => {
-    const open = !md.classList.contains('open')
-    md.classList.toggle('open', open)
-    mt.classList.toggle('open', open)
-    mt.setAttribute('aria-expanded', String(open))
-    md.style.setProperty('max-height', open ? '3000px' : '0px', 'important')
-    if (open) setTimeout(() => md.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 320)
-  })
 })
 </script>
 
 <template>
-  <div class="play-chooser" ref="root">
-    <div class="pc-bg"><img class="fell" :src="fellowship" alt=""></div>
+  <div class="play-chooser">
+    <div class="pc-bg" ref="bgRef"><img class="fell" :src="fellowship" alt=""></div>
 
     <div class="enter">
-      <div class="eyebrow">Multi Users in Middle-earth</div>
       <h1>Enter MUME</h1>
       <p class="q">Welcome to MUME. <b>Which road is yours?</b></p>
 
       <div class="choices">
-        <div class="choice first">
+        <div class="choice first" @mousemove="tilt" @mouseleave="untilt">
           <span class="corner"></span>
           <div class="ico">🌱</div>
           <h2>I'm new to the game...</h2>
@@ -64,7 +61,7 @@ onMounted(() => {
           <a class="go" :href="tutorialUrl">Begin the tutorial</a>
           <p class="note">You can retake this tutorial at any time.</p>
         </div>
-        <div class="choice acct">
+        <div class="choice acct" @mousemove="tilt" @mouseleave="untilt">
           <span class="corner"></span>
           <div class="ico">⚔️</div>
           <h2>I have an account</h2>
@@ -74,8 +71,8 @@ onMounted(() => {
       </div>
 
       <div class="everyway">
-        <button class="more-toggle" aria-expanded="false">Every way to play<span class="car">⌄</span></button>
-        <div class="more-details">
+        <button class="more-toggle" :class="{ open: expanded }" :aria-expanded="expanded" @click="toggleMore">Every way to play<span class="car">⌄</span></button>
+        <div class="more-details" :class="{ open: expanded }" :style="{ maxHeight: expanded ? '3000px' : '0px' }">
           <div class="inner">
             <div class="ways3">
               <div class="way">
@@ -107,24 +104,23 @@ onMounted(() => {
 
 <!-- Not scoped: JS-created embers need these rules too. Everything is namespaced under .play-chooser. -->
 <style>
-.play-chooser { position: relative; }
-.play-chooser .pc-bg { position: absolute; inset: -40px 0 0; z-index: 0; pointer-events: none; overflow: hidden; }
-.play-chooser .pc-bg .fell { position: absolute; left: 50%; top: 30%; transform: translate(-50%, -50%); width: min(1100px, 150vw); opacity: .07; filter: grayscale(1) contrast(1.1); -webkit-mask: radial-gradient(60% 60% at 50% 50%, #000 40%, transparent 78%); mask: radial-gradient(60% 60% at 50% 50%, #000 40%, transparent 78%); }
+.play-chooser { position: relative; padding-top: .5rem; }
+.play-chooser .pc-bg { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.play-chooser .pc-bg .fell { position: absolute; left: 50%; top: 34%; transform: translate(-50%, -50%); width: min(1100px, 150vw); opacity: .07; filter: grayscale(1) contrast(1.1); -webkit-mask: radial-gradient(60% 60% at 50% 50%, #000 40%, transparent 78%); mask: radial-gradient(60% 60% at 50% 50%, #000 40%, transparent 78%); }
 .play-chooser .pc-ember { position: absolute; bottom: -12px; border-radius: 50%; background: radial-gradient(circle, #ffd98a, #d7a63f 60%, transparent 70%); opacity: 0; animation: pc-rise linear infinite; }
 @keyframes pc-rise { 0% { opacity: 0; transform: translateY(0); } 12% { opacity: .75; } 100% { opacity: 0; transform: translateY(-98vh) translateX(var(--dx)); } }
 @keyframes pc-up { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
 
 .play-chooser .enter { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; text-align: center; }
-.play-chooser .eyebrow { font-family: 'Merriweather', serif; font-style: italic; color: #d7a63f; letter-spacing: .14em; text-transform: uppercase; font-size: 13px; opacity: 0; animation: pc-up .7s ease .1s forwards; }
-.play-chooser h1 { font-family: 'Kelt'; color: #f4dd94; font-size: clamp(40px, 8vw, 78px); margin: .1em 0; text-align: center; text-shadow: 0 4px 30px rgba(215, 166, 63, .25); opacity: 0; animation: pc-up .8s ease .2s forwards; border: 0; }
-.play-chooser .q { font-size: clamp(16px, 2.3vw, 20px); color: #cfc9bb; margin: .2em 0 30px; opacity: 0; animation: pc-up .8s ease .34s forwards; }
+.play-chooser h1 { font-family: 'Kelt'; color: #f4dd94; font-size: clamp(40px, 8vw, 78px); margin: 0 0 .12em; text-align: center; text-shadow: 0 4px 30px rgba(215, 166, 63, .25); opacity: 0; animation: pc-up .8s ease .1s forwards; border: 0; }
+.play-chooser .q { font-size: clamp(16px, 2.3vw, 20px); color: #cfc9bb; margin: 0 0 28px; opacity: 0; animation: pc-up .8s ease .24s forwards; }
 .play-chooser .q b { color: #f4dd94; font-style: italic; }
 
 .play-chooser .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: center; }
 @media (max-width: 680px) { .play-chooser .choices { grid-template-columns: 1fr; } }
 .play-chooser .choice { position: relative; padding: 30px 24px 26px; background: linear-gradient(160deg, #15130c, #0b0b0d); border: 1px solid rgba(215, 166, 63, .35); clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 22px 100%, 0 calc(100% - 22px)); transform: translateY(24px); opacity: 0; transition: transform .25s cubic-bezier(.2, .8, .2, 1), box-shadow .25s, border-color .25s; animation: pc-up .8s ease forwards; }
-.play-chooser .choice:nth-child(1) { animation-delay: .5s; }
-.play-chooser .choice:nth-child(2) { animation-delay: .62s; }
+.play-chooser .choice:nth-child(1) { animation-delay: .4s; }
+.play-chooser .choice:nth-child(2) { animation-delay: .52s; }
 .play-chooser .choice::before { content: ""; position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen; opacity: 0; transition: opacity .3s; background: linear-gradient(115deg, transparent 40%, rgba(255, 240, 200, .14) 50%, transparent 60%); }
 .play-chooser .choice:hover { transform: translateY(-6px) scale(1.015); border-color: #d7a63f; box-shadow: 0 24px 60px rgba(0, 0, 0, .6); }
 .play-chooser .choice:hover::before { opacity: 1; }
