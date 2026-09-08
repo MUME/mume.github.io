@@ -267,7 +267,7 @@ const DEFAULT = {
       "body": [
         "MUME is Middle-earth. The map is built from Tolkien, from the Shire to Bree to the Misty Mountains, and it has been growing since 1991.",
         "You pick a side. The Free Peoples defend the West. The forces of Mordor attack it.",
-        "As a new player, you'll start on the side of men, hobbits, dwarves and elves. You will being your journey near the Tower Hills as a new character with only the most basic of equipment. That is normal. Everyone starts there."
+        "As a new player, you'll start on the side of men, hobbits, dwarves and elves. You will begin your journey near the Tower Hills as a new character with only the most basic of equipment. That is normal. Everyone starts there."
       ],
       "teach": [],
       "practice": null
@@ -595,7 +595,7 @@ const DEFAULT = {
       "title": "Dying is not the end",
       "body": [
         "You will die. Everybody dies, often, and it is a normal part of the game rather than a failure.",
-        "When you die you wake up in the Halls of Mandos. From here you 'pray <city>\" (ie, \"pray Bree\") to return to one of the towns around Middle-Earth. Your equipment stays behind on your corpse and you can go back for it, or ask someone to help you recover it.",
+        "When you die you wake up in the Halls of Mandos. From here you \"pray <city>\" (ie, \"pray Bree\") to return to one of the towns around Middle-Earth. Your equipment stays behind on your corpse and you can go back for it, or ask someone to help you recover it.",
         "You do not lose your character and you do not start again."
       ],
       "teach": [],
@@ -681,21 +681,10 @@ function localCopy(){
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(content)); }catch(e){} }
 
 async function boot(){
-  const vid = new URLSearchParams(location.search).get("v");
-  try{
-    const r = await fetch(vid ? ("api/content?v=" + encodeURIComponent(vid)) : "api/content", {cache:"no-store"});
-    if(r.ok){
-      const d = await r.json();
-      if(d && d.lessons && d.lessons.length){ content = d; source = vid ? "shared" : "published"; }
-    }else if(vid){
-      alert("That shared tutorial link wasn't found — it may have expired. Showing the standard tutorial.");
-      const l = localCopy(); if(l && l.lessons){ content = l; source = "local draft"; }
-    }else{
-      const l = localCopy(); if(l && l.lessons){ content = l; source = "local draft"; }
-    }
-  }catch(e){
-    const l = localCopy(); if(l && l.lessons){ content = l; source = "local draft"; }
-  }
+  // Static build: no backend. Render the built-in tutorial (falls back to a
+  // local draft if one was saved in this browser). No network requests.
+  const l = localCopy();
+  if(l && l.lessons && l.lessons.length){ content = l; source = "local draft"; }
   restart();
   booted = true;
 }
