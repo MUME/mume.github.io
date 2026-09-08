@@ -23,12 +23,13 @@ description: Contents of the Multi-Users in Middle-earth Website.
 - <a href="https://mume.org/search" target="_self" rel="external">Search</a>
 
 ### MUME Boards
+- [Boards Overview](/resources/boards/)
 - <a href="https://mume.org/news/game/" target="_self" rel="external">The Game News Board</a>
-- <a href="https://mume.org/resources/boards/Starter's/" target="_self" rel="external">The Starter's Board</a>
-- <a href="https://mume.org/resources/boards/FAQ/" target="_self" rel="external">FAQ Board</a>
-- <a href="https://mume.org/resources/boards/Tales/" target="_self" rel="external">The Tales Board (MUME fun)</a>
-- <a href="https://mume.org/resources/boards/InCharacter/" target="_self" rel="external">Free People Chronicles</a>
-- <a href="https://mume.org/resources/boards/OrcsIncharacter/" target="_self" rel="external">Orkish Drumlore</a>
+- <a href="https://mume.org/resources/boards/starters/" target="_self" rel="external">The Starter's Board</a>
+- <a href="https://mume.org/resources/boards/faq/" target="_self" rel="external">FAQ Board</a>
+- <a href="https://mume.org/resources/boards/tales/" target="_self" rel="external">The Tales Board (MUME fun)</a>
+- <a href="https://mume.org/resources/boards/in-character/" target="_self" rel="external">Free People Chronicles</a>
+- <a href="https://mume.org/resources/boards/orcs-incharacter/" target="_self" rel="external">Orkish Drumlore</a>
 
 ### Playing
 - Via telnet at `mume.org` port `23` or `4242`
@@ -36,6 +37,16 @@ description: Contents of the Multi-Users in Middle-earth Website.
 
 ### Middle-earth
 - <a href="https://mume.org/dictionary/" target="_self" rel="external">Middle-earth Dictionary</a>
+
+### Polls & Questionnaires
+- [Questionnaires Overview](/resources/questionnaires/)
+- <a href="https://lookerstudio.google.com/reporting/3ee7c0b0-3eb6-4191-87a3-eec325e6488d/page/B99yD" target="_blank" rel="noopener noreferrer">March 2024 Poll #2744 (Looker Studio) ↗</a>
+- [April 2000 Poll](/resources/questionnaires/2000-04)
+- [February 1998 Poll](/resources/questionnaires/1998-02)
+- [October 1995 Poll](/resources/questionnaires/1995-09)
+
+### Frequentation
+- <a href="https://mume.org/plots/" target="_self" rel="external">Frequentation Plots</a>
 
 ### Community
 - [Undertakings by the MUME Community](/community/)

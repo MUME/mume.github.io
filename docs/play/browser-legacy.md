@@ -18,7 +18,7 @@ Unless you have a specific need for them, please use our <a href="./">modern web
 
 Choose a legacy client to launch in your browser:
 
-* <a href="../play-mume/" target="_self" rel="external">DecafMUD</a> (2017) - HTML5/Javascript
+* <a href="https://docs.mume.org/play-mume/" target="_self" rel="external">DecafMUD</a> (2017) - HTML5/Javascript
 * <a href="./mumejc/">MUMEjc</a> (2013) - Requires Java 7+
 * <a href="./mudjc/">MUDjc</a> (1999) - Requires Java
 
@@ -26,11 +26,11 @@ Choose a legacy client to launch in your browser:
 </div>
 
 <div class="playnow">
-  <a href="../play-mume/" target="_self" rel="external">Play with DecafMUD</a>
+  <a href="https://docs.mume.org/play-mume/" target="_self" rel="external">Play with DecafMUD</a>
 </div>
 
 <div style="text-align: center; margin: 1.5rem 0;">
-  <a href="../play-mume/" target="_self" rel="external">
+  <a href="https://docs.mume.org/play-mume/" target="_self" rel="external">
     <img src="/assets/images/playmume.png" srcset="/assets/images/playmume.png 1x, /assets/images/playmume@2x.png 2x" alt="Play MUME for free using the web client" style="width: 100%; max-width: 924px; height: auto;" />
   </a>
 </div>

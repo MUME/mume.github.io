@@ -55,7 +55,7 @@ export default defineConfig({
           { text: 'Help', link: 'https://mume.org/help/' },
           { text: 'Rules', link: 'https://mume.org/rules/' },
           { text: 'Dictionary', link: 'https://mume.org/dictionary/' },
-          { text: 'Boards', link: 'https://mume.org/resources/boards/' },
+          { text: 'Boards', link: '/resources/boards/' },
           { text: 'Download', link: 'https://mume.org/download/' },
           { text: 'Restricted', link: 'https://mume.org/restricted/' }
         ]
