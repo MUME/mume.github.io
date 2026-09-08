@@ -38,6 +38,15 @@ description: Contents of the Multi-Users in Middle-earth Website.
 ### Middle-earth
 - <a href="https://mume.org/dictionary/" target="_self" rel="external">Middle-earth Dictionary</a>
 
+### Polls & Questionnaires
+- [Questionnaires Overview](/resources/questionnaires/)
+- [April 2000 Poll](/resources/questionnaires/2000-04)
+- [February 1998 Poll](/resources/questionnaires/1998-02)
+- [October 1995 Poll](/resources/questionnaires/1995-09)
+
+### Frequentation
+- <a href="https://mume.org/plots/" target="_self" rel="external">Frequentation Plots</a>
+
 ### Community
 - [Undertakings by the MUME Community](/community/)
 - [Some links to elsewhere…](/links)
