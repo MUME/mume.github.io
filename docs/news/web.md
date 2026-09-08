@@ -22,11 +22,11 @@ description: Archive of MUME web site news and major site update milestones.
 | **11 September 2001** | MUME's web site redesign is almost completed. Some new pages: [A description of MUME](/about/), [A complete sample MUME session](/resources/session). |
 | **29 August 2001** | While MUME approaches its tenth birthday its web site has (finally) gone under redesign! |
 | **25 August 2001** | Updated the [links section](/links). |
-| **27 June 2001** | New board: <a href="https://mume.org/resources/boards/FAQ/" target="_self" rel="external">FAQ</a>. |
-| **11 April 2000** | The results of the latest MUME questionnaire are available <a href="https://mume.org/resources/answers-00.04" target="_self" rel="external">here</a>! |
+| **27 June 2001** | New board: <a href="https://mume.org/resources/boards/faq/" target="_self" rel="external">FAQ</a>. |
+| **11 April 2000** | The results of the latest MUME questionnaire are available [here](/resources/questionnaires/2000-04)! |
 | **4 February 2000** | Fixed the Site Search and the Web Statistics (a y2k bug indeed!). |
-| **18 January 2000** | New boards: <a href="https://mume.org/resources/boards/InCharacter/" target="_self" rel="external">Free People Chronicles</a> and <a href="https://mume.org/resources/boards/OrcsIncharacter/" target="_self" rel="external">Orkish Drumlore</a>. |
-| **17 January 2000** | The <a href="https://mume.org/resources/boards/Starter's/" target="_self" rel="external">Starter's Board</a> and the <a href="https://mume.org/resources/boards/Tales/" target="_self" rel="external">Tales Board</a> are also available. |
+| **18 January 2000** | New boards: <a href="https://mume.org/resources/boards/in-character/" target="_self" rel="external">Free People Chronicles</a> and <a href="https://mume.org/resources/boards/orcs-incharacter/" target="_self" rel="external">Orkish Drumlore</a>. |
+| **17 January 2000** | The <a href="https://mume.org/resources/boards/starters/" target="_self" rel="external">Starter's Board</a> and the <a href="https://mume.org/resources/boards/tales/" target="_self" rel="external">Tales Board</a> are also available. |
 | **15 January 2000** | The <a href="https://mume.org/news/game/" target="_self" rel="external">News Board</a>, announcing game news, is now available on the website. |
 | **11 April 1999** | [MUME VII Released!](/about/m7) Web site modifications. |
 | **2 February 1999** | Added a Java MUD Client. |

@@ -110,7 +110,7 @@ onUnmounted(() => {
             <li><a href="https://mume.org/help/" target="_self" rel="external">Help</a></li>
             <li><a href="https://mume.org/rules/" target="_self" rel="external">Rules</a></li>
             <li><a href="https://mume.org/dictionary/" target="_self" rel="external">Dictionary</a></li>
-            <li><a href="https://mume.org/resources/boards/" target="_self" rel="external">Boards</a></li>
+            <li><a :href="withBase('/resources/boards/')" :class="{ current: isActive('/resources/boards') }">Boards</a></li>
             <li><a href="https://mume.org/download/" target="_self" rel="external">Download</a></li>
             <li><a href="https://mume.org/restricted/" target="_self" rel="external">Restricted</a></li>
           </ul>
