@@ -52,7 +52,7 @@ There are three ways to join the battle for Middle-earth:
   <p>MMapper is the most powerful option that 95% of our playerbase uses. This option requires installing and configuring software on your computer. MMapper is a community developed, open source MUME game client that helps you navigate by showing your current position within Middle-earth on a map.</p>
 
   <div class="playnow">
-    <a href="https://mume.github.io/MMapper/" target="_blank" rel="noopener">Download MMapper Desktop</a>
+    <a href="https://docs.mume.org/MMapper/" target="_blank" rel="noopener">Download MMapper Desktop</a>
   </div>
 </section>
 
