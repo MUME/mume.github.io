@@ -271,6 +271,11 @@ nav ul li a:hover .caret.right {
 /* Play Now button */
 .content .playnow {
     margin-top: 0.75em;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25em 3em;
     text-align: center;
     background: #0a0d15;
     background-image: url(../../assets/images/play-now-banner.jpg);
@@ -288,15 +293,28 @@ nav ul li a:hover .caret.right {
         background-image: url(../../assets/images/play-now-banner@2x.jpg);
     }
 }
-.content .readytoexplore {
-    display: inline-block;
-    margin: 0 1em 0 1em;
+.content .playnow a.tutorial-btn {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.05;
+    padding-top: 0.4em;
+    padding-bottom: 0.4em;
+}
+.content .playnow a.tutorial-btn small {
+    font-family: 'Merriweather', serif;
+    font-size: 0.4em;
+    font-weight: normal;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.92;
+    margin-top: 0.55em;
     white-space: nowrap;
 }
 .content .playnow a {
     background-color: darkgoldenrod;
     padding: 0.5em 2em 0.5em 2em; /* 16 px */
-    margin: 0 1em 0 1em;
+    margin: 0;
     border: none;
     max-width: 18.75rem; /* 300 px */
     border-radius: 3.75rem; /* 60 px */
@@ -304,8 +322,6 @@ nav ul li a:hover .caret.right {
     color: white;
     text-decoration: none;
     white-space: nowrap;
-    margin-left: auto;
-    margin-right: auto;
 }
 .content .playnow a:hover {
     color: #3a3a3a;
@@ -516,12 +532,6 @@ footer {
     body {
       margin-left: 0;
       margin-right: 0;
-    }
-
-    .content .readytoexplore {
-        white-space: normal;
-        margin: 0.5em 0;
-        font-size: 0.85em;
     }
 
     .content .playnow a {

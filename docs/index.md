@@ -18,7 +18,7 @@ You can trust us to stick to you through thick and thin&mdash;to the bitter end.
 <div class="separator"></div>
 
 <div class="playnow">
-<a href="./tutorial/">Newbie Tutorial</a>
+<a href="./tutorial/" class="tutorial-btn">Tutorial<small>Newbies start here</small></a>
 <a href="./play">Play Now</a>
 </div>
 
