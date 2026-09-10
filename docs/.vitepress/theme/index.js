@@ -1,6 +1,7 @@
 import Layout from './Layout.vue'
 import MumeSession from './components/MumeSession.vue'
 import MumeQuote from './components/MumeQuote.vue'
+import TutorialPlayer from './components/TutorialPlayer.vue'
 import { nextTick } from 'vue'
 
 export default {
@@ -8,6 +9,7 @@ export default {
   enhanceApp({ app, router }) {
     app.component('MumeSession', MumeSession)
     app.component('MumeQuote', MumeQuote)
+    app.component('TutorialPlayer', TutorialPlayer)
 
     if (typeof window !== 'undefined') {
       const GA_MEASUREMENT_ID = 'G-LL4RX9KM6Q'
