@@ -87,7 +87,7 @@ onUnmounted(() => {
         <li class="has_children">
           <a :href="withBase('/')" :class="{ current: isActive('/', true) || isActive('/community') }">Community<span class="caret down"></span></a>
           <ul>
-            <li><a href="https://discord.gg/XkZN55am9a" target="_blank" rel="noopener">Discord <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+            <li><a :href="withBase('/community/discord')" :class="{ current: isActive('/community/discord') }">Discord <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
             <li><a href="https://elvenrunes.com" target="_blank" rel="noopener">Elvenrunes <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
             <li><a :href="withBase('/opensource')" :class="{ current: isActive('/opensource') }">Open Source</a></li>
             <li><a :href="withBase('/links')" :class="{ current: isActive('/links') }">Links</a></li>
