@@ -1,6 +1,13 @@
 ---
-title: Information for Newcomers
-description: Guides, FAQs, essential commands, and video tutorials for newcomers to MUME.
+title: MUME Newbie & Beginner Survival Guide
+description: Essential beginner guides, 15-chapter interactive tutorial directory, quick command reference guide, and survival tips for new players joining Multi-Users in Middle-earth (MUME).
+head:
+  - - meta
+    - property: og:title
+      content: MUME Newbie & Beginner Survival Guide
+  - - meta
+    - property: og:description
+      content: Essential beginner guides, 15-chapter interactive tutorial directory, quick command reference guide, and survival tips for new players joining MUME.
 ---
 
 # Information for Newcomers
@@ -10,43 +17,63 @@ Oh yeah, have fun running around at night with no torch not being able to see a 
 <template #cite>TotalBiscuit, <a href="https://forums.somethingawful.com/showthread.php?threadid=3238046#post369417316" target="_blank" rel="noopener">SA Forum Post</a></template>
 </MumeQuote>
 
-## Welcome to MUME
+<MumeCallout
+  title="Interactive Walkthrough"
+  subtitle="Start Here"
+  body="Master MUME step-by-step with Fuor the Man in our 15-chapter interactive tutorial. Complete chapters at your own pace, or test commands in the terminal."
+  actionText="Start Chapter 1: Hero Creation"
+  actionHref="/play/tutorial/1-orientation"
+  icon="fa-terminal"
+  variant="gold"
+/>
 
-What you find on this page is an extension of the documentation available in-game. This page features several tutorials to aide you, our newest player, in navigating MUME.
+## 1. Quick Command Reference Guide
 
-## Complete Beginners
+Filter by category below to inspect essential MUME survival commands, syntax, and descriptions. Click any chapter link to practice the command live in our interactive terminal simulator.
 
-If you are new to Multi-User Dungeons (MUDs), the precursors to MMORPGs, we strongly recommend that you to read the following essential knowledge to help you navigate and survive Middle-earth:
+<MumeCommandGuide />
 
-- <a href="https://mume.org/help/newbie" target="_self" rel="external">Introduction to MUME's most important aspects (help newcomer)</a>
-- <a href="https://mume.org/help/faq" target="_self" rel="external">Frequently asked questions (help faq)</a>
-- <a href="https://mume.org/help/basics" target="_self" rel="external">Basic commands needed to survive (help basic)</a>
+## 2. Interactive Tutorial Chapters
 
-Once you have completed reading the above subjects, then please proceed onwards to the advanced subjects.
+Jump directly into any walkthrough chapter below following **Fuor the Man** from account creation in Mandos through wild adventuring outside Fornost.
 
-## Advanced Subjects
+<TutorialChapterGrid />
 
-If you have played other MUDs before but are new to MUME, you can skip ahead to read about MUME’s unique features here:
+## 3. Recommended Guides & Documentation
 
-- <a href="https://mume.org/help/advanced" target="_self" rel="external">More advanced commands… (help advanced)</a>
-- [Interesting features](/about/features)
-- <a href="https://mume.org/rules/" target="_self" rel="external">Rules for all players to observe (rules)</a>
+Explore the official in-game documentation and guides to deepen your understanding:
 
-If you have not done so yet, check out the tutorials below for more survival tips.
+- **Beginner Essentials**: <a href="https://mume.org/help/newbie" target="_self" rel="external">Introduction to MUME (help newcomer)</a> | <a href="https://mume.org/help/basics" target="_self" rel="external">Basic Commands (help basic)</a>
+- **Frequent Questions**: <a href="https://mume.org/help/faq" target="_self" rel="external">Frequently Asked Questions (help faq)</a>
+- **Advanced Features**: <a href="https://mume.org/help/advanced" target="_self" rel="external">Advanced Commands (help advanced)</a> | [Unique Features](/about/features)
+- **Rules of Middle-earth**: <a href="https://mume.org/rules/" target="_self" rel="external">MUME Code of Conduct & Rules</a>
 
-## Tutorials
+## 4. Video Tutorials & Sample Sessions
 
-There are two tutorials that are available. If you prefer text over video then you can read [a complete sample MUME session](/resources/session). Otherwise, watch the YouTube tutorial below.
+Prefer visual or log-based learning? Watch our complete YouTube walkthrough series or inspect an annotated session log:
 
-Quick tips for watching the videos:
-- Watch in fullscreen and high quality; otherwise the text is hard to see
-- Confirm that annotations are enabled (the boxes of text that pop up throughout the videos)
-- Pause and review specific commands as needed!
-
-You can switch videos in the playlist with the hamburger menu at the top right corner or [watch them on YouTube instead](https://www.youtube.com/playlist?list=PLZPa6XiiZkfQZVGIw1xD7B21n51f4wLCs).
+- [Read a complete sample MUME session log](/resources/session)
+- Watch the community video tutorials below (ensure annotations are enabled):
 
 <div class="youtube-container">
 <iframe width="100%" height="315" src="https://www.youtube.com/embed/videoseries?list=PLZPa6XiiZkfQZVGIw1xD7B21n51f4wLCs" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 
-Please contact us in game if you have any comments!
+## 5. Finding Help In-Game
+
+Never hesitate to ask for assistance. MUME has dedicated **Rangers** whose purpose is to mentor new players:
+
+- Type <code>who ranger</code> in-game to see active Rangers online.
+- Use <code>tell &lt;ranger_name&gt; hello, I am new!</code> to send them a private message.
+- Use <code>follow &lt;ranger_name&gt;</code> to travel alongside them safely in their party.
+- Join the community on <a href="../community/discord" target="_blank" rel="noopener">Discord</a> to ask questions and meet fellow adventurers.
+
+<MumeCallout
+  title="Ready to enter Middle-earth?"
+  subtitle="Play Hub"
+  body="Launch MMapper Web in your browser, download MMapper Desktop, or connect via Mudlet."
+  actionText="Go to Play Hub"
+  actionHref="/play/"
+  icon="fa-gamepad"
+  variant="gold"
+/>

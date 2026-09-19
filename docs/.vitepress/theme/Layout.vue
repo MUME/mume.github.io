@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useData, useRoute, withBase } from 'vitepress'
 import CookieConsent from './components/CookieConsent.vue'
 import gandalfImg from './gandalf_90.gif'
@@ -7,11 +7,11 @@ import gandalfImg2x from './gandalf_90@2x.gif'
 import './mume.css'
 
 const { site, page, frontmatter } = useData()
-const vpRoute = useRoute()
+const route = useRoute()
 
 const isActive = (path, exact = false) => {
   const target = withBase(path)
-  const current = vpRoute.path
+  const current = route.path
 
   if (exact) {
     return current === target || (target === '/' && (current === '/' || current === '/index.html'))
@@ -30,6 +30,16 @@ const navbarRef = ref(null)
 const gandalfRef = ref(null)
 
 const lastUpdated = __LAST_UPDATED__
+
+const isTutorialPage = computed(() => {
+  if (!route.path) return false
+  let path = route.path.replace(/\.html$/, '')
+  const base = site.value?.base || '/'
+  if (base !== '/' && path.startsWith(base)) {
+    path = '/' + path.slice(base.length)
+  }
+  return path.startsWith('/play/tutorial/') && path !== '/play/tutorial/' && path !== '/play/tutorial/index'
+})
 
 let prevScrollpos = 0
 
@@ -60,7 +70,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="theme-container">
+  <div class="theme-container" :class="{ 'is-tutorial': isTutorialPage }">
     <label class="toggle" for="toggle">
       <i class="fa fa-bars" aria-hidden="true"></i> <span>Menu</span>
     </label>
@@ -138,6 +148,9 @@ onUnmounted(() => {
         <p class="center">"You cannot pass," he said.</p>
         <p class="center"><a :href="withBase('/')">Return to the Shire (Home)</a></p>
       </div>
+      <TutorialPlayer v-else-if="isTutorialPage">
+        <Content />
+      </TutorialPlayer>
       <Content v-else />
     </div>
 

@@ -1,10 +1,19 @@
 ---
 layout: home
+title: MUME - Multi-Users in Middle-earth | Free Online Tolkien MUD
+description: Play MUME for free. A rich multiplayer text RPG set in Tolkien's Middle-earth with real-time mapping, interactive beginner tutorial, and active community.
+head:
+  - - meta
+    - property: og:title
+      content: MUME - Multi-Users in Middle-earth | Free Online Tolkien MUD
+  - - meta
+    - property: og:description
+      content: Explore Tolkien's Middle-earth in MUME. Free online text MUD with interactive tutorial and MMapper web client.
 ---
 
 <div class="home">
 <div class="center-img">
-<img src="./assets/images/fellowship_bw.jpg" alt="The Fellowship" class="banner-img">
+<img src="./assets/images/fellowship_bw.jpg" alt="The Fellowship of the Ring" class="banner-img">
 </div>
 
 <div class="quote">
@@ -17,9 +26,12 @@ You can trust us to stick to you through thick and thin&mdash;to the bitter end.
 
 <div class="separator"></div>
 
-<div class="playnow">
-<div class="readytoexplore">Ready to explore Middle-earth?</div>
-<a href="./play">Play Now</a>
+<div class="playnow" role="region" aria-label="Start playing MUME">
+  <div class="readytoexplore">Ready to explore Middle-earth?</div>
+  <div class="playnow-buttons">
+    <a href="./play/"><i class="fa fa-gamepad" aria-hidden="true"></i> Play Now</a>
+    <a href="./play/tutorial/" class="btn-secondary-playnow"><i class="fa fa-compass" aria-hidden="true"></i> Interactive Tutorial</a>
+  </div>
 </div>
 
 <div class="separator"></div>
@@ -34,7 +46,7 @@ You can trust us to stick to you through thick and thin&mdash;to the bitter end.
 <iframe src="https://discord.com/widget?id=497457567392333824&theme=dark" width="100%" height="400" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
 </div>
 <div class="center-img" style="margin-top: 1rem;">
-<a href="https://discord.gg/XkZN55am9a" target="_blank" rel="noopener" class="read-more">Join Discord <i class="fa fa-external-link" aria-hidden="true"></i></a>
+<a href="./community/discord" target="_blank" rel="noopener" class="read-more">Join Discord <i class="fa fa-external-link" aria-hidden="true"></i></a>
 </div>
 </section>
 
@@ -118,3 +130,35 @@ Discover player-developed tools like MMapper, Powwow, and more. All our projects
 </section>
 </div>
 </div>
+
+<style>
+.playnow-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.playnow a.btn-secondary-playnow {
+  background-color: rgba(10, 13, 21, 0.75);
+  border: 2px solid darkgoldenrod;
+  color: white;
+}
+
+.playnow a.btn-secondary-playnow:hover {
+  background-color: darkgoldenrod;
+  color: #3a3a3a;
+}
+
+@media (max-width: 650px) {
+  .playnow-buttons {
+    flex-direction: column;
+  }
+  .playnow a {
+    margin: 0.25em auto;
+    width: 80%;
+  }
+}
+</style>

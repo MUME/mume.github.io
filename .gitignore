@@ -28,3 +28,4 @@ docs/.vitepress/cache
 # Backup directory
 backup/
 test-results/
+tutorial_*.png
