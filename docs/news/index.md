@@ -3,11 +3,11 @@ title: News
 description: Latest developments, changes, war updates, and traffic plots for Multi-Users in Middle-earth.
 ---
 
-# News
-
 <div class="page-banner">
   <img src="/assets/images/fellowship_bw.jpg" srcset="/assets/images/fellowship_bw.jpg 1x, /assets/images/fellowship_bw@2x.jpg 2x" alt="The Fellowship of the Ring" class="banner-img" />
 </div>
+
+# News
 
 <dl>
 <dt><a href="https://mume.org/news/war" target="_self" rel="external">State of the War</a></dt>
