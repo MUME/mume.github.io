@@ -3,7 +3,7 @@ title: Open Source Projects
 ---
 
 <div class="opensource">
-<div class="center-img">
+<div class="page-banner">
 <img src="./assets/images/horsemannight.jpg" alt="Open Source" class="banner-img">
 </div>
 

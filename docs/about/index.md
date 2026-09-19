@@ -3,8 +3,8 @@ title: About MUME
 description: A short explanation on what Multi-Users in Middle-earth is.
 ---
 
-<div style="text-align: center; margin-bottom: 2rem;">
-  <img src="/assets/images/fellowship_bw.jpg" srcset="/assets/images/fellowship_bw.jpg 1x, /assets/images/fellowship_bw@2x.jpg 2x" alt="A short explanation on what Multi-Users in Middle-earth is" style="width: 100%; max-width: 654px; height: auto;" />
+<div class="page-banner">
+  <img src="/assets/images/fellowship_bw.jpg" srcset="/assets/images/fellowship_bw.jpg 1x, /assets/images/fellowship_bw@2x.jpg 2x" alt="A short explanation on what Multi-Users in Middle-earth is" class="banner-img" />
 </div>
 
 # About MUME
@@ -62,4 +62,4 @@ Below is a snapshot of the Middle-earth outdoor areas that are available on MUME
   <img src="/assets/images/map_public_small.jpg" alt="Map of Arda" style="width: 100%; max-width: 790px; height: auto;" />
 </div>
 
-For the record, here is how Arda looked like in [2001](https://mume.org/Images/map_public_small_200109.jpg), [2006](/about/building), and [2009](https://mume.org/Images/map_public_small_200907.jpg).
+For the record, here is how Arda looked like in [2001](/assets/images/map_public_small_200109.jpg), [2006](/about/building), and [2009](/assets/images/map_public_small_200907.jpg).

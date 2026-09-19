@@ -3,7 +3,7 @@ title: Player Interviews
 ---
 
 <div class="interviews">
-  <div class="center-img">
+  <div class="page-banner">
     <img src="../../assets/images/gandalf.jpg" alt="Gandalf" class="banner-img" />
   </div>
 

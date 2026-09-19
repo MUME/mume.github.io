@@ -5,8 +5,8 @@ description: Latest developments, changes, war updates, and traffic plots for Mu
 
 # News
 
-<div style="text-align: center; margin-bottom: 2rem;">
-  <img src="/assets/images/fellowship_bw.jpg" srcset="/assets/images/fellowship_bw.jpg 1x, /assets/images/fellowship_bw@2x.jpg 2x" alt="The Fellowship of the Ring" style="width: 100%; max-width: 654px; height: auto;" />
+<div class="page-banner">
+  <img src="/assets/images/fellowship_bw.jpg" srcset="/assets/images/fellowship_bw.jpg 1x, /assets/images/fellowship_bw@2x.jpg 2x" alt="The Fellowship of the Ring" class="banner-img" />
 </div>
 
 <dl>

@@ -10,8 +10,8 @@ head:
       content: Join the battle for Middle-earth. Play MUME directly in your browser with MMapper Web, download MMapper Desktop, or connect via Mudlet.
 ---
 
-<div style="text-align: center; margin-bottom: 1.5rem;">
-  <img src="/assets/images/fellowship_bw.jpg" srcset="/assets/images/fellowship_bw.jpg 1x, /assets/images/fellowship_bw@2x.jpg 2x" alt="Play MUME for free by using the Web Client, downloading MMapper, or connecting with a Mud Client" style="width: 100%; max-width: 654px; height: auto; border-radius: 6px;" />
+<div class="page-banner">
+  <img src="/assets/images/fellowship_bw.jpg" srcset="/assets/images/fellowship_bw.jpg 1x, /assets/images/fellowship_bw@2x.jpg 2x" alt="Play MUME for free by using the Web Client, downloading MMapper, or connecting with a Mud Client" class="banner-img" />
 </div>
 
 # Playing MUME

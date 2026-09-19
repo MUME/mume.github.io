@@ -12,8 +12,8 @@ head:
 ---
 
 <div class="home">
-<div class="center-img">
-<img src="./assets/images/fellowship_bw.jpg" alt="The Fellowship of the Ring" class="banner-img">
+<div class="page-banner">
+<img src="./assets/images/fellowship_bw.jpg" srcset="./assets/images/fellowship_bw.jpg 1x, ./assets/images/fellowship_bw@2x.jpg 2x" alt="The Fellowship of the Ring" class="banner-img">
 </div>
 
 <div class="quote">
@@ -30,7 +30,7 @@ You can trust us to stick to you through thick and thin&mdash;to the bitter end.
   <div class="readytoexplore">Ready to explore Middle-earth?</div>
   <div class="playnow-buttons">
     <a href="./play/"><i class="fa fa-gamepad" aria-hidden="true"></i> Play Now</a>
-    <a href="./play/tutorial/" class="btn-secondary-playnow"><i class="fa fa-compass" aria-hidden="true"></i> Interactive Tutorial</a>
+    <a href="./play/tutorial/1-orientation" class="btn-secondary-playnow"><i class="fa fa-compass" aria-hidden="true"></i> Interactive Tutorial</a>
   </div>
 </div>
 
