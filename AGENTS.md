@@ -21,6 +21,13 @@ This repository is a VitePress-based documentation site that serves as the MUME 
 
 Update `docs/links.md` to add or modify community resources.
 
+### Interactive Tutorial Chapters
+
+To add or edit tutorial chapters in `docs/play/tutorial/`:
+1. Follow the non-technical authoring guide in [`docs/play/TUTORIAL.md`](docs/play/TUTORIAL.md).
+2. Create or edit Markdown files named `[number]-[slug].md` (e.g., `16-advanced-tactics.md`). No Vue code or template editing required.
+3. Frontmatter defines `title`, `description`, `teach` list, and interactive practice `steps` with `response` text.
+
 ## Build and Verification
 
 - Use Docker for all development — do not run `npm install` directly.

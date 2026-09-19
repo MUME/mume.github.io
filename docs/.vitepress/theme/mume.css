@@ -1248,3 +1248,21 @@ a:hover {
     flex: 1;
   }
 }
+
+/* Tutorial Mobile Layout Overrides */
+@media only screen and (max-width: 768px) {
+    .theme-container.is-tutorial nav,
+    .theme-container.is-tutorial label.toggle,
+    .theme-container.is-tutorial #gandalf,
+    .theme-container.is-tutorial footer {
+        display: none !important;
+    }
+
+    .theme-container.is-tutorial .content {
+        padding-top: 0.5rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        max-width: 100%;
+        min-height: 100dvh;
+    }
+}
