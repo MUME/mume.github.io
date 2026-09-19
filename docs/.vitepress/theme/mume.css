@@ -273,7 +273,7 @@ nav ul li a:hover .caret.right {
     margin-top: 0.75em;
     text-align: center;
     background: #0a0d15;
-    background-image: url(/assets/images/play-now-banner.jpg);
+    background-image: url(../../public/assets/images/play-now-banner.jpg);
     background-position: center;
     background-size: cover;
     border-radius: 0.3em;
@@ -285,7 +285,7 @@ nav ul li a:hover .caret.right {
 (-webkit-min-device-pixel-ratio: 1.25),
 (min-resolution: 1.25dppx) {
     .content .playnow {
-        background-image: url(/assets/images/play-now-banner@2x.jpg);
+        background-image: url(../../public/assets/images/play-now-banner@2x.jpg);
     }
 }
 .content .readytoexplore {
@@ -534,7 +534,7 @@ footer {
         font-size: 0.8em;
     }
     .content .playnow {
-        background-image: url(/assets/images/play-now-banner@2x.jpg);
+        background-image: url(../../public/assets/images/play-now-banner@2x.jpg);
     }
 
     :target::before {
