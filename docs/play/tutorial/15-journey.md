@@ -46,8 +46,8 @@ Congratulations on guiding Fuor through the Black Hills walkthrough! You have ma
 When you launch into MUME using the Web Client, you'll see an integrated live mapper (**MMapper**) and character stats panel:
 
 <div style="display: flex; gap: 12px; margin: 12px 0; flex-wrap: wrap;">
-  <img src="../../assets/images/tutorial-desc.png" alt="Web Client Interface" style="max-width: 48%; border-radius: 6px; border: 1px solid rgba(215,166,63,0.3);" />
-  <img src="../../assets/images/tutorial-map.png" alt="MMapper Live Map" style="max-width: 48%; border-radius: 6px; border: 1px solid rgba(215,166,63,0.3);" />
+  <img src="/assets/images/tutorial-desc.png" alt="Web Client Interface" style="max-width: 48%; border-radius: 6px; border: 1px solid rgba(215,166,63,0.3);" />
+  <img src="/assets/images/tutorial-map.png" alt="MMapper Live Map" style="max-width: 48%; border-radius: 6px; border: 1px solid rgba(215,166,63,0.3);" />
 </div>
 
 Follow the interactive quest prompts below to complete your graduation!
