@@ -19,11 +19,17 @@ const { site, frontmatter } = useData()
 
 function formatInlineMarkdown(text) {
   if (!text) return ''
-  const safe = text
+  let safe = text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-  return safe.replace(/`([^`]+)`/g, '<code class="tut-cmd-inline">$1</code>')
+
+  safe = safe.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
+    return `<img src="${src}" alt="${alt}" class="tut-img-embed" onload="this.dispatchEvent(new Event('load', { bubbles: true }))" />`
+  })
+
+  safe = safe.replace(/`([^`]+)`/g, '<code class="tut-cmd-inline">$1</code>')
+  return safe.replace(/\n/g, '<br>')
 }
 
 const currentChapterObj = computed(() => {
@@ -1000,6 +1006,17 @@ onUnmounted(() => {
   font-style: italic;
   font-size: 13.5px;
   line-height: 1.5;
+  flex: 1;
+}
+
+.tut-img-embed {
+  max-width: 100%;
+  max-height: 220px;
+  border-radius: 6px;
+  border: 1px solid rgba(215, 166, 63, 0.35);
+  margin: 8px 0;
+  display: block;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .tut-complete-box {

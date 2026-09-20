@@ -16,12 +16,14 @@ steps:
       - "look"
       - "l"
     hint: "Type: look"
+  - story: "![Web Client Interface](/assets/images/tutorial-desc.png)\nWhen connected via the MUME Web Client, you'll enjoy integrated live mapping and stats tracking."
   - ask: "map"
     note: "Type `map` to examine the live MMapper radar view."
     accept:
       - "map"
       - "m"
     hint: "Type: map"
+  - story: "![MMapper Live Radar](/assets/images/tutorial-map.png)\nMMapper tracks your position in real-time as you journey through Middle-earth."
   - ask: "who ranger"
     note: "MUME Rangers exist specifically to assist new players! Check active Rangers with `who ranger`."
     accept:
@@ -39,15 +41,4 @@ responses:
 
 # Chapter 15: Hero's Graduation
 
-Congratulations on guiding Fuor through the Black Hills walkthrough! You have mastered navigation, combat reflexes, equipment, trading, and resting.
-
-### Web Client & MMapper Preview
-
-When you launch into MUME using the Web Client, you'll see an integrated live mapper (**MMapper**) and character stats panel:
-
-<div style="display: flex; gap: 12px; margin: 12px 0; flex-wrap: wrap;">
-  <img src="/assets/images/tutorial-desc.png" alt="Web Client Interface" style="max-width: 48%; border-radius: 6px; border: 1px solid rgba(215,166,63,0.3);" />
-  <img src="/assets/images/tutorial-map.png" alt="MMapper Live Map" style="max-width: 48%; border-radius: 6px; border: 1px solid rgba(215,166,63,0.3);" />
-</div>
-
-Follow the interactive quest prompts below to complete your graduation!
+Congratulations on guiding Fuor through the Black Hills walkthrough! Follow the interactive quest prompts below to complete your graduation.
