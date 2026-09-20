@@ -101,7 +101,8 @@ const isModalOpen = ref(false)
 const pendingPagerChunks = ref([]) // Remaining unrevealed chunks
 const currentPagerTotal = ref(1)
 const currentPagerIndex = ref(1)
-const isPagerActive = computed(() => pendingPagerChunks.value.length > 0)
+const isScrollOverflowActive = ref(false)
+const isPagerActive = computed(() => pendingPagerChunks.value.length > 0 || isScrollOverflowActive.value)
 const pendingNextStep = ref(null)
 
 function openModal() {
@@ -142,18 +143,56 @@ function handleFullscreenChange() {
   }
 }
 
+function checkScrollOverflow() {
+  if (typeof window === 'undefined' || !logEl.value) return
+  setTimeout(() => {
+    const el = logEl.value
+    if (!el) return
+    const remainingScroll = el.scrollHeight - el.clientHeight - el.scrollTop
+    if (remainingScroll > 30 && pendingPagerChunks.value.length === 0) {
+      isScrollOverflowActive.value = true
+      const pageSize = Math.max(100, el.clientHeight - 40)
+      currentPagerTotal.value = Math.max(2, Math.ceil(el.scrollHeight / pageSize))
+      currentPagerIndex.value = Math.min(currentPagerTotal.value, Math.floor(el.scrollTop / pageSize) + 1)
+    } else if (remainingScroll <= 30) {
+      isScrollOverflowActive.value = false
+    }
+  }, 100)
+}
+
 function advancePager() {
-  if (!isPagerActive.value) return
-  const nextChunk = pendingPagerChunks.value.shift()
-  if (nextChunk) {
-    log.value.push(nextChunk)
-    currentPagerIndex.value++
-    scrollLog()
-  }
-  if (pendingPagerChunks.value.length === 0 && pendingNextStep.value) {
-    const fn = pendingNextStep.value
-    pendingNextStep.value = null
-    fn()
+  if (pendingPagerChunks.value.length > 0) {
+    const nextChunk = pendingPagerChunks.value.shift()
+    if (nextChunk) {
+      log.value.push(nextChunk)
+      currentPagerIndex.value++
+      scrollLog()
+    }
+    if (pendingPagerChunks.value.length === 0) {
+      checkScrollOverflow()
+      if (!isScrollOverflowActive.value && pendingNextStep.value) {
+        const fn = pendingNextStep.value
+        pendingNextStep.value = null
+        fn()
+      }
+    }
+  } else if (isScrollOverflowActive.value && logEl.value) {
+    const el = logEl.value
+    const pagePx = Math.max(100, el.clientHeight - 40)
+    el.scrollBy({ top: pagePx, behavior: 'smooth' })
+    setTimeout(() => {
+      const remainingScroll = el.scrollHeight - el.clientHeight - el.scrollTop
+      if (remainingScroll <= 30) {
+        isScrollOverflowActive.value = false
+        if (pendingNextStep.value) {
+          const fn = pendingNextStep.value
+          pendingNextStep.value = null
+          fn()
+        }
+      } else {
+        currentPagerIndex.value = Math.min(currentPagerTotal.value, currentPagerIndex.value + 1)
+      }
+    }, 300)
   }
 }
 
@@ -162,7 +201,10 @@ function flushPager() {
     const chunk = pendingPagerChunks.value.shift()
     if (chunk) log.value.push(chunk)
   }
-  scrollLog()
+  if (logEl.value) {
+    logEl.value.scrollTo({ top: logEl.value.scrollHeight, behavior: 'smooth' })
+  }
+  isScrollOverflowActive.value = false
   if (pendingNextStep.value) {
     const fn = pendingNextStep.value
     pendingNextStep.value = null
@@ -189,23 +231,56 @@ function handleKeydown(e) {
   }
 }
 
+function getTerminalPageSize() {
+  if (typeof window === 'undefined' || !logEl.value) {
+    return 12
+  }
+  const containerHeight = logEl.value.clientHeight || 400
+  // Usable height accounting for padding & card overhead
+  const usableHeight = Math.max(120, containerHeight - 60)
+  const linePx = 20 // line-height for terminal font (~19-20px)
+  return Math.max(5, Math.floor(usableHeight / linePx))
+}
+
 function pushLogItem(item) {
-  // If item is an example or story with multiline body, check if it needs paging
-  if ((item.kind === 'example' || item.kind === 'story') && item.body) {
+  const pageSize = getTerminalPageSize()
+
+  // Check items with multiline body (example, story, narrative)
+  if ((item.kind === 'example' || item.kind === 'story' || item.kind === 'narrative') && item.body) {
     const lines = item.body.split('\n')
-    // Chunk threshold: if lines > 8
-    if (lines.length > 8) {
+
+    // Calculate line weights, counting image elements (<img) as ~8 lines worth of vertical space
+    let totalWeightedLines = 0
+    for (const l of lines) {
+      if (l.includes('<img')) totalWeightedLines += 8
+      else totalWeightedLines += 1
+    }
+
+    if (totalWeightedLines > pageSize) {
       const chunks = []
-      const chunkSize = 6
-      for (let i = 0; i < lines.length; i += chunkSize) {
-        chunks.push(lines.slice(i, i + chunkSize).join('\n'))
+      let currentChunk = []
+      let currentWeight = 0
+
+      for (const line of lines) {
+        const lineWeight = line.includes('<img') ? 8 : 1
+        if (currentChunk.length > 0 && currentWeight + lineWeight > pageSize) {
+          chunks.push(currentChunk.join('\n'))
+          currentChunk = [line]
+          currentWeight = lineWeight
+        } else {
+          currentChunk.push(line)
+          currentWeight += lineWeight
+        }
+      }
+      if (currentChunk.length > 0) {
+        chunks.push(currentChunk.join('\n'))
       }
 
-      // First chunk is pushed immediately
+      // Push first full page chunk immediately
       item.body = chunks[0]
       log.value.push(item)
 
-      // Remaining chunks placed in queue
+      // Queue remaining page chunks
       const remaining = chunks.slice(1).map(c => ({
         kind: item.kind,
         body: c
@@ -267,6 +342,7 @@ function scrollLog() {
       } else {
         container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
       }
+      checkScrollOverflow()
     }, 60)
   }
 }
@@ -578,7 +654,7 @@ onUnmounted(() => {
 
       <div class="tut-body" :class="{ 'has-sheet': isSheetOpen }">
         <div class="tut-term">
-          <div class="tut-log" ref="logEl" aria-live="polite" aria-atomic="false">
+          <div class="tut-log" ref="logEl" @load.capture="scrollLog" aria-live="polite" aria-atomic="false">
             <div v-for="(b, i) in log" :key="i" class="tut-block">
               <template v-if="b.kind === 'lesson'">
                 <!-- Chapter Intro Card -->
