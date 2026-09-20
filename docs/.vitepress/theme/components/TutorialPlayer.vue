@@ -26,7 +26,16 @@ function formatInlineMarkdown(text) {
 
   safe = safe.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
     const cleanAlt = alt.replace(/"/g, '&quot;')
-    const cleanSrc = src.replace(/"/g, '&quot;')
+    let cleanSrc = src.trim().replace(/"/g, '&quot;')
+
+    if (cleanSrc.includes('assets/')) {
+      cleanSrc = '/assets/' + cleanSrc.split('assets/')[1]
+    }
+
+    if (cleanSrc.startsWith('/')) {
+      cleanSrc = withBase(cleanSrc)
+    }
+
     return `<img src="${cleanSrc}" alt="${cleanAlt}" class="tut-img-embed" onload="this.dispatchEvent(new Event('load', { bubbles: true }))" />`
   })
 
@@ -332,7 +341,7 @@ function goToStep(targetIdx) {
   log.value = newLog
   scrollLog()
 
-  const curSub = currentSubStep.value
+  const curSub = stepsList.value[targetIdx] || null
   if (curSub && !curSub.ask && (curSub.text || curSub.response)) {
     log.value.push({
       kind: 'story',
@@ -374,9 +383,9 @@ function advanceSubStep() {
   clearAutoAdvanceTimer()
   if (subStepIdx.value < stepsList.value.length - 1) {
     subStepIdx.value++
-    const nextSub = currentSubStep.value
+    const nextSub = stepsList.value[subStepIdx.value] || null
 
-    if (nextSub.ask) {
+    if (nextSub && nextSub.ask) {
       log.value.push({
         kind: 'prompt_next',
         stepIndex: subStepIdx.value,
@@ -386,7 +395,7 @@ function advanceSubStep() {
       })
       scrollLog()
       focusInput()
-    } else if (nextSub.text || nextSub.response) {
+    } else if (nextSub && (nextSub.text || nextSub.response)) {
       log.value.push({
         kind: 'story',
         body: nextSub.text || nextSub.response
@@ -489,8 +498,8 @@ watch(() => route.path, () => {
 let logResizeObserver = null
 
 onMounted(() => {
-  renderStepLog()
   if (typeof window !== 'undefined') {
+    renderStepLog()
     // Auto-open Command Sheet on desktop viewports by default
     if (window.innerWidth >= 1024) {
       isSheetOpen.value = true
