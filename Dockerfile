@@ -13,6 +13,7 @@ ARG VITE_BASE=/
 ENV VITE_BASE=${VITE_BASE}
 
 RUN npm run build
+RUN npm test
 
 FROM nginx:alpine
 

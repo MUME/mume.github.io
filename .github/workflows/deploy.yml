@@ -55,6 +55,11 @@ jobs:
         env:
           VITE_BASE: ${{ env.VITE_BASE || format('{0}/', steps.pages.outputs.base_path) }}
 
+      - name: Verify links and asset paths
+        run: npm test
+        env:
+          VITE_BASE: ${{ env.VITE_BASE || format('{0}/', steps.pages.outputs.base_path) }}
+
       - name: Collect PRs to deploy
         uses: actions/github-script@v9
         with:
