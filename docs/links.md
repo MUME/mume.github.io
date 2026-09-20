@@ -3,8 +3,8 @@ title: Community Links
 ---
 
 <div class="links">
-  <div class="center-img">
-    <img src="/assets/images/fellowship_bw.jpg" alt="The Fellowship" class="banner-img">
+  <div class="page-banner">
+    <img src="/assets/images/fellowship_bw.jpg" srcset="/assets/images/fellowship_bw.jpg 1x, /assets/images/fellowship_bw@2x.jpg 2x" alt="The Fellowship" class="banner-img">
   </div>
 
   <h1>Related Links</h1>
@@ -21,7 +21,7 @@ title: Community Links
     <div class="banner-code">
       <h3>Use this banner on your site</h3>
       <p>Help spread the word about MUME. Copy the code below to link to us:</p>
-      <pre><code>&lt;a href="https://mume.org"&gt;&lt;img src="https://mume.org/Images/mume_banner.gif" alt="MUME"&gt;&lt;/a&gt;</code></pre>
+      <pre><code>&lt;a href="https://docs.mume.org"&gt;&lt;img src="https://docs.mume.org/assets/images/mume_banner.gif" alt="MUME"&gt;&lt;/a&gt;</code></pre>
     </div>
   </div>
 

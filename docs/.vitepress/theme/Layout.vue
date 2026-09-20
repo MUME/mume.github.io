@@ -144,7 +144,7 @@ onUnmounted(() => {
         <img alt="Durin's Bane - a Balrog within the Mines of Moria"
              class="center"
              style="width: 160px; max-width: 100%; padding: 50px;"
-             src="/assets/images/balrog.png">
+             :src="withBase('/assets/images/balrog.png')">
         <p class="center">"You cannot pass," he said.</p>
         <p class="center"><a :href="withBase('/')">Return to the Shire (Home)</a></p>
       </div>
