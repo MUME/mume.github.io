@@ -25,7 +25,9 @@ function formatInlineMarkdown(text) {
     .replace(/>/g, '&gt;')
 
   safe = safe.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
-    return `<img src="${src}" alt="${alt}" class="tut-img-embed" onload="this.dispatchEvent(new Event('load', { bubbles: true }))" />`
+    const cleanAlt = alt.replace(/"/g, '&quot;')
+    const cleanSrc = src.replace(/"/g, '&quot;')
+    return `<img src="${cleanSrc}" alt="${cleanAlt}" class="tut-img-embed" onload="this.dispatchEvent(new Event('load', { bubbles: true }))" />`
   })
 
   safe = safe.replace(/`([^`]+)`/g, '<code class="tut-cmd-inline">$1</code>')
@@ -402,6 +404,8 @@ function advanceSubStep() {
 function prevSubStep() {
   if (subStepIdx.value > 0) {
     goToStep(subStepIdx.value - 1)
+  } else if (prevChapterUrl.value) {
+    navigateToUrl(prevChapterUrl.value)
   }
 }
 

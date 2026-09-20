@@ -59,7 +59,7 @@ Always use the YAML multiline literal pipe character `|` for multi-line story be
 ```yaml
 steps:
   - story: |
-      ![Web Client Interface](/assets/images/tutorial-desc.png)
+      ![Web Client Interface](../public/assets/images/tutorial-desc.png)
       When connected via the MUME Web Client, you'll enjoy integrated live mapping and stats tracking.
 responses:
   score: |
@@ -116,7 +116,7 @@ steps:
 ## Embedded Images & Step-by-Step Paging
 
 For chapters introducing visual concepts or UI previews (such as client interface screenshots):
-1. **Stream Images via Story Beats or Responses:** Instead of dumping large images into the Markdown body at the bottom of the file, attach images to specific `story` beats using Markdown image syntax: `![alt text](/assets/images/filename.png)`.
+1. **Stream Images via Story Beats or Responses:** Instead of dumping large images into the Markdown body at the bottom of the file, attach images to specific `story` beats using Markdown image syntax: `![alt text](../../public/assets/images/filename.png)`.
 2. **Automated Terminal Pager:** When images or large text outputs stream into the log, the terminal's built-in MUD pager activates automatically if content overflows the viewport. Users can press `Space` or `Enter` (or tap the prompt on touch devices) to page through content line-by-line without needing to scroll manually with a mouse.
 3. **Compact Initial Card:** Keep the Markdown lesson text below frontmatter concise so that when a chapter opens, the initial intro card and first quest prompt fit within the terminal log without initial overflow.
 

@@ -149,7 +149,59 @@ for (const htmlFile of htmlFiles) {
   }
 }
 
-console.log(`[TEST SUMMARY] Checked ${htmlFiles.length} HTML files, ${totalLinksChecked} internal links, and ${totalAssetsChecked} asset references.`)
+// 4. Verify Markdown image asset links in docs/*.md
+const docsDir = path.resolve(__dirname, '../docs')
+function getAllMdFiles(dir, fileList = []) {
+  if (!fs.existsSync(dir)) return fileList
+  const files = fs.readdirSync(dir)
+  for (const file of files) {
+    const filePath = path.join(dir, file)
+    if (fs.statSync(filePath).isDirectory()) {
+      getAllMdFiles(filePath, fileList)
+    } else if (file.endsWith('.md')) {
+      fileList.push(filePath)
+    }
+  }
+  return fileList
+}
+
+const mdFiles = getAllMdFiles(docsDir)
+let totalMdImagesChecked = 0
+
+for (const mdFile of mdFiles) {
+  const content = fs.readFileSync(mdFile, 'utf8')
+  const relMdPath = path.relative(docsDir, mdFile)
+  const matches = [...content.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)]
+
+  for (const match of matches) {
+    const imgUrl = match[1].trim().split(/\s+/)[0]
+    if (
+      imgUrl.startsWith('http://') ||
+      imgUrl.startsWith('https://') ||
+      imgUrl.startsWith('data:') ||
+      imgUrl === 'url' ||
+      imgUrl.includes('filename.png')
+    ) {
+      continue
+    }
+
+    totalMdImagesChecked++
+    let resolvedImgPath = ''
+    if (imgUrl.startsWith('/assets/')) {
+      resolvedImgPath = path.join(docsDir, 'public', imgUrl)
+    } else if (imgUrl.startsWith('/')) {
+      resolvedImgPath = path.join(docsDir, 'public', imgUrl)
+    } else {
+      resolvedImgPath = path.resolve(path.dirname(mdFile), imgUrl)
+    }
+
+    if (!fs.existsSync(resolvedImgPath)) {
+      errors.push(`docs/${relMdPath}: Markdown image "${imgUrl}" not found at "${resolvedImgPath}"`)
+    }
+  }
+}
+
+console.log(`[TEST SUMMARY] Checked ${htmlFiles.length} HTML files, ${totalLinksChecked} internal links, ${totalAssetsChecked} dist asset references, and ${totalMdImagesChecked} Markdown image links.`)
 
 if (errors.length > 0) {
   console.error(`\n[TEST FAILURES] Found ${errors.length} link/asset path issues:\n`)

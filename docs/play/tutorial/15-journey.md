@@ -17,7 +17,7 @@ steps:
       - "l"
     hint: "Type: look"
   - story: |
-      ![Web Client Interface](/assets/images/tutorial-desc.png)
+      ![Web Client Interface](../../public/assets/images/tutorial-desc.png)
       When connected via the MUME Web Client, you'll enjoy integrated live mapping and stats tracking.
   - ask: "map"
     note: "Type `map` to examine the live MMapper radar view."
@@ -26,7 +26,7 @@ steps:
       - "m"
     hint: "Type: map"
   - story: |
-      ![MMapper Live Radar](/assets/images/tutorial-map.png)
+      ![MMapper Live Radar](../../public/assets/images/tutorial-map.png)
       MMapper tracks your position in real-time as you journey through Middle-earth.
   - ask: "who ranger"
     note: "MUME Rangers exist specifically to assist new players! Check active Rangers with `who ranger`."
