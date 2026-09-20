@@ -21,7 +21,7 @@ The MUME ecosystem is powered by its community. Many of the tools, clients, and 
 <h2>Featured Projects</h2>
 
 <div class="card">
-<img src="/assets/images/mume_logo.jpg" srcset="/assets/images/mume_logo.jpg 1x, /assets/images/mume_logo@2x.jpg 2x" alt="MMapper Logo">
+<img src="/assets/images/mume_logo.jpg" alt="MMapper Logo">
 <div>
 <h3>MMapper</h3>
 <p>
@@ -32,7 +32,7 @@ A graphical mapper for MUME. It helps you navigate the vast world of Middle-eart
 </div>
 
 <div class="card">
-<img src="/assets/images/boromir-horn.png" srcset="/assets/images/boromir-horn.png 1x, /assets/images/boromir-horn@2x.png 2x" alt="Powwow Logo">
+<img src="/assets/images/boromir-horn.png" alt="Powwow Logo">
 <div>
 <h3>Powwow</h3>
 <p>
@@ -43,7 +43,7 @@ A powerful, extensible client for MUME. It features a robust scripting engine, c
 </div>
 
 <div class="card">
-<img src="/assets/images/shield-gondor.png" srcset="/assets/images/shield-gondor.png 1x, /assets/images/shield-gondor@2x.png 2x" alt="PowTTY Logo">
+<img src="/assets/images/shield-gondor.png" alt="PowTTY Logo">
 <div>
 <h3>PowTTY</h3>
 <p>
@@ -65,7 +65,7 @@ A modern web-based client for MUME using DecafMUD. Perfect for new players or th
 </div>
 
 <div class="card">
-<img src="/assets/images/shield-mordor.png" srcset="/assets/images/shield-mordor.png 1x, /assets/images/shield-mordor@2x.png 2x" alt="MUSHclient-MUME Logo">
+<img src="/assets/images/shield-mordor.png" alt="MUSHclient-MUME Logo">
 <div>
 <h3>MUSHclient-MUME</h3>
 <p>
