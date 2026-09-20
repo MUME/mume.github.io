@@ -102,7 +102,9 @@ const autoAdvanceTimer = ref(null)
 const currentPagerTotal = ref(1)
 const currentPagerIndex = ref(1)
 const isScrollOverflowActive = ref(false)
-const isPagerActive = computed(() => isScrollOverflowActive.value)
+const isScrolling = ref(false)
+let scrollEndTimer = null
+const isPagerActive = computed(() => isScrollOverflowActive.value && !isScrolling.value)
 const pendingNextStep = ref(null)
 
 function clearAutoAdvanceTimer() {
@@ -110,6 +112,15 @@ function clearAutoAdvanceTimer() {
     clearTimeout(autoAdvanceTimer.value)
     autoAdvanceTimer.value = null
   }
+}
+
+function handleScroll() {
+  isScrolling.value = true
+  if (scrollEndTimer) clearTimeout(scrollEndTimer)
+  scrollEndTimer = setTimeout(() => {
+    isScrolling.value = false
+    checkScrollOverflow()
+  }, 150)
 }
 
 function openModal() {
@@ -154,6 +165,8 @@ function checkScrollOverflow() {
   if (typeof window === 'undefined' || !logEl.value) return
   const el = logEl.value
   if (!el) return
+  if (isScrolling.value) return
+
   const remainingScroll = el.scrollHeight - el.clientHeight - el.scrollTop
   if (remainingScroll > 35) {
     isScrollOverflowActive.value = true
@@ -169,21 +182,17 @@ function advancePager() {
   if (isScrollOverflowActive.value && logEl.value) {
     const el = logEl.value
     const pagePx = Math.max(100, el.clientHeight - 40)
+    isScrolling.value = true
     el.scrollBy({ top: pagePx, behavior: 'smooth' })
-    setTimeout(() => {
-      checkScrollOverflow()
-      if (!isScrollOverflowActive.value && pendingNextStep.value) {
-        const fn = pendingNextStep.value
-        pendingNextStep.value = null
-        fn()
-      }
-    }, 350)
+    handleScroll()
   }
 }
 
 function flushPager() {
   if (logEl.value) {
+    isScrolling.value = true
     logEl.value.scrollTo({ top: logEl.value.scrollHeight, behavior: 'smooth' })
+    handleScroll()
   }
   isScrollOverflowActive.value = false
   if (pendingNextStep.value) {
@@ -249,6 +258,7 @@ function scrollLog() {
         const container = logEl.value
         if (!container) return
         const blocks = container.querySelectorAll('.tut-block')
+        isScrolling.value = true
         if (blocks.length > 0) {
           const lastBlock = blocks[blocks.length - 1]
           const containerRect = container.getBoundingClientRect()
@@ -263,7 +273,7 @@ function scrollLog() {
         } else {
           container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
         }
-        checkScrollOverflow()
+        handleScroll()
       }, 60)
     })
   }
@@ -607,7 +617,7 @@ onUnmounted(() => {
 
       <div class="tut-body" :class="{ 'has-sheet': isSheetOpen }">
         <div class="tut-term">
-          <div class="tut-log" ref="logEl" @load.capture="checkScrollOverflow" @scroll="checkScrollOverflow" aria-live="polite" aria-atomic="false">
+          <div class="tut-log" ref="logEl" @load.capture="checkScrollOverflow" @scroll="handleScroll" aria-live="polite" aria-atomic="false">
             <div v-for="(b, i) in log" :key="i" class="tut-block">
               <template v-if="b.kind === 'lesson'">
                 <!-- Chapter Intro Card -->
