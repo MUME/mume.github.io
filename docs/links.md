@@ -3,8 +3,8 @@ title: Community Links
 ---
 
 <div class="links">
-  <div class="page-banner">
-    <img src="/assets/images/fellowship_bw.jpg" srcset="/assets/images/fellowship_bw.jpg 1x, /assets/images/fellowship_bw@2x.jpg 2x" alt="The Fellowship" class="banner-img">
+  <div class="center-img">
+    <img src="/assets/images/fellowship_bw.jpg" alt="The Fellowship" class="banner-img">
   </div>
 
   <h1>Related Links</h1>

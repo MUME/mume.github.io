@@ -3,8 +3,8 @@ title: Resources
 description: Contents of the Multi-Users in Middle-earth Website.
 ---
 
-<div class="page-banner">
-  <img src="/assets/images/contents.jpg" srcset="/assets/images/contents.jpg 1x, /assets/images/contents@2x.jpg 2x" alt="Contents" class="banner-img" style="max-width: 320px;" />
+<div style="text-align: center; margin-bottom: 2rem;">
+  <img src="/assets/images/contents.jpg" srcset="/assets/images/contents.jpg 1x, /assets/images/contents@2x.jpg 2x" alt="Contents" style="width: 100%; max-width: 300px; height: auto;" />
 </div>
 
 # Resources

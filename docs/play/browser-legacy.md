@@ -3,8 +3,8 @@ title: Play (Legacy)
 description: Play MUME in your web browser using legacy web clients like DecafMUD, MUMEjc, and MUDjc.
 ---
 
-<div class="page-banner">
-  <img src="/assets/images/fellowship_bw.jpg" srcset="/assets/images/fellowship_bw.jpg 1x, /assets/images/fellowship_bw@2x.jpg 2x" alt="Play MUME for free using legacy web clients" class="banner-img" />
+<div style="text-align: center; margin-bottom: 2rem;">
+  <img src="/assets/images/fellowship_bw.jpg" srcset="/assets/images/fellowship_bw.jpg 1x, /assets/images/fellowship_bw@2x.jpg 2x" alt="Play MUME for free using legacy web clients" style="width: 100%; max-width: 654px; height: auto;" />
 </div>
 
 # Play MUME in your web browser! (Legacy)
