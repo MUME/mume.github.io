@@ -50,11 +50,17 @@ Write your lesson introduction here using standard Markdown. Explain the concept
 
 ---
 
-## Easy Multiline Text Formatting
+## Easy Multiline Text Formatting (No `\n` Required!)
 
-Instead of typing `\n` for line breaks, use the YAML multiline literal pipe character `|` so you can write natural, formatted MUD terminal responses across multiple lines:
+**Do NOT use `\n` for line breaks in tutorial files.** Non-technical contributors should write natural multiline text.
+
+Always use the YAML multiline literal pipe character `|` for multi-line story beats, step notes, or simulated MUD outputs:
 
 ```yaml
+steps:
+  - story: |
+      ![Web Client Interface](/assets/images/tutorial-desc.png)
+      When connected via the MUME Web Client, you'll enjoy integrated live mapping and stats tracking.
 responses:
   score: |
     36/36 hits, 76/76 mana, and 126/126 moves.
