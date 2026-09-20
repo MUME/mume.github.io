@@ -5,7 +5,7 @@
   Clear end-of-tutorial handover options to Play Hub, Browser Client, or Newcomers Guide.
   Features visual toggle pill indicator for Commands, unified Narrative vs Quest Action Card UX, and inline markdown formatting for commands in quest descriptions.
 */
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useData, useRoute, useRouter, withBase } from 'vitepress'
 import { data as allChapters } from '../../../play/tutorial/chapters.data.js'
 
@@ -97,32 +97,6 @@ const isSheetOpen = ref(false)
 const isExpanded = ref(false)
 const isModalOpen = ref(false)
 
-// Reactive Pager State & Timer Management
-const autoAdvanceTimer = ref(null)
-const currentPagerTotal = ref(1)
-const currentPagerIndex = ref(1)
-const isScrollOverflowActive = ref(false)
-const isScrolling = ref(false)
-let scrollEndTimer = null
-const isPagerActive = computed(() => isScrollOverflowActive.value && !isScrolling.value)
-const pendingNextStep = ref(null)
-
-function clearAutoAdvanceTimer() {
-  if (autoAdvanceTimer.value) {
-    clearTimeout(autoAdvanceTimer.value)
-    autoAdvanceTimer.value = null
-  }
-}
-
-function handleScroll() {
-  isScrolling.value = true
-  if (scrollEndTimer) clearTimeout(scrollEndTimer)
-  scrollEndTimer = setTimeout(() => {
-    isScrolling.value = false
-    checkScrollOverflow()
-  }, 150)
-}
-
 function openModal() {
   isModalOpen.value = true
 }
@@ -161,75 +135,96 @@ function handleFullscreenChange() {
   }
 }
 
-function checkScrollOverflow() {
-  if (typeof window === 'undefined' || !logEl.value) return
-  const el = logEl.value
-  if (!el) return
-  if (isScrolling.value) return
-
-  const remainingScroll = el.scrollHeight - el.clientHeight - el.scrollTop
-  if (remainingScroll > 35) {
-    isScrollOverflowActive.value = true
-    const pageSize = Math.max(100, el.clientHeight - 40)
-    currentPagerTotal.value = Math.max(2, Math.ceil(el.scrollHeight / pageSize))
-    currentPagerIndex.value = Math.min(currentPagerTotal.value, Math.max(1, Math.floor(el.scrollTop / pageSize) + 1))
-  } else if (remainingScroll <= 20) {
-    isScrollOverflowActive.value = false
-  }
-}
-
-function advancePager() {
-  if (isScrollOverflowActive.value && logEl.value) {
-    const el = logEl.value
-    const pagePx = Math.max(100, el.clientHeight - 40)
-    isScrolling.value = true
-    el.scrollBy({ top: pagePx, behavior: 'smooth' })
-    handleScroll()
-  }
-}
-
-function flushPager() {
-  if (logEl.value) {
-    isScrolling.value = true
-    logEl.value.scrollTo({ top: logEl.value.scrollHeight, behavior: 'smooth' })
-    handleScroll()
-  }
-  isScrollOverflowActive.value = false
-  if (pendingNextStep.value) {
-    const fn = pendingNextStep.value
-    pendingNextStep.value = null
-    fn()
-  }
-}
-
 function handleKeydown(e) {
   if (e.key === 'Escape' && isExpanded.value) {
     if (!document.fullscreenElement) {
       toggleExpand()
     }
-  } else if (isPagerActive.value) {
-    // Only intercept Space key for pager if target is body or input field is empty
-    if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'PageDown') {
-      if (e.target === document.body || (e.target === inputEl.value && !entry.value)) {
-        e.preventDefault()
-        advancePager()
-      }
-    } else if (e.key === 'Enter' && e.target !== inputEl.value) {
+    return
+  }
+
+  // Intercept Space or PageDown for paging if output overflow is active and input is empty or unfocused
+  if (isScrollOverflowActive.value && !isScrolling.value) {
+    const isInputFocused = document.activeElement === inputEl.value
+    if (e.key === 'PageDown' || (e.key === ' ' && (!isInputFocused || !entry.value.trim()))) {
       e.preventDefault()
-      advancePager()
+      pageForward()
     }
   }
-}
-
-function pushLogItem(item) {
-  log.value.push(item)
-  scrollLog()
 }
 
 const logEl = ref(null)
 const inputEl = ref(null)
 
+// Pager state management
+const isScrollOverflowActive = ref(false)
+const currentPageNum = ref(1)
+const totalPagesNum = ref(1)
+const isScrolling = ref(false)
+let scrollEndTimer = null
+
+function updatePagerState() {
+  const container = logEl.value
+  if (!container) {
+    isScrollOverflowActive.value = false
+    currentPageNum.value = 1
+    totalPagesNum.value = 1
+    return
+  }
+
+  const scrollHeight = container.scrollHeight
+  const clientHeight = container.clientHeight
+  const scrollTop = container.scrollTop
+
+  // Determine if there is significant scrollable content below viewport
+  const scrollableDistance = scrollHeight - clientHeight
+  const remainingScroll = scrollableDistance - scrollTop
+
+  if (scrollableDistance > 40 && remainingScroll > 35) {
+    isScrollOverflowActive.value = true
+    const pageSize = Math.max(1, clientHeight - 30)
+    totalPagesNum.value = Math.max(1, Math.ceil(scrollHeight / pageSize))
+    currentPageNum.value = Math.min(totalPagesNum.value, Math.max(1, Math.floor(scrollTop / pageSize) + 1))
+  } else {
+    isScrollOverflowActive.value = false
+    currentPageNum.value = 1
+    totalPagesNum.value = 1
+  }
+}
+
+function handleScroll() {
+  isScrolling.value = true
+  if (scrollEndTimer) clearTimeout(scrollEndTimer)
+  scrollEndTimer = setTimeout(() => {
+    isScrolling.value = false
+    updatePagerState()
+  }, 150)
+}
+
+function pageForward() {
+  const container = logEl.value
+  if (!container) return
+  const pageStep = container.clientHeight - 40
+  container.scrollBy({ top: pageStep, behavior: 'smooth' })
+  setTimeout(updatePagerState, 300)
+}
+
+function flushPager() {
+  const container = logEl.value
+  if (!container) return
+  container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
+  setTimeout(updatePagerState, 300)
+}
+
 const stepLabel = computed(() => `Chapter ${chapterNum.value} of ${totalChapters.value}`)
+
+let autoAdvanceTimer = null
+function clearAutoAdvanceTimer() {
+  if (autoAdvanceTimer) {
+    clearTimeout(autoAdvanceTimer)
+    autoAdvanceTimer = null
+  }
+}
 
 function focusInput() {
   if (typeof window !== 'undefined') {
@@ -241,6 +236,7 @@ function focusInput() {
 
 function navigateToUrl(url) {
   if (!url) return
+  clearAutoAdvanceTimer()
   const targetUrl = withBase(url)
   if (router && router.go) {
     router.go(targetUrl).catch(() => {
@@ -253,141 +249,109 @@ function navigateToUrl(url) {
 
 function scrollLog() {
   if (typeof window !== 'undefined') {
-    nextTick(() => {
-      setTimeout(() => {
-        const container = logEl.value
-        if (!container) return
-        const blocks = container.querySelectorAll('.tut-block')
-        isScrolling.value = true
-        if (blocks.length > 0) {
-          const lastBlock = blocks[blocks.length - 1]
-          const containerRect = container.getBoundingClientRect()
-          const blockRect = lastBlock.getBoundingClientRect()
+    setTimeout(() => {
+      const container = logEl.value
+      if (!container) return
+      const blocks = container.querySelectorAll('.tut-block')
+      if (blocks.length > 0) {
+        const lastBlock = blocks[blocks.length - 1]
+        const containerRect = container.getBoundingClientRect()
+        const blockRect = lastBlock.getBoundingClientRect()
 
-          // Bring the top of new/last block into view if it overflows
-          if (blockRect.height > containerRect.height - 40) {
-            lastBlock.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          } else {
-            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
-          }
+        // If block is taller than the view, bring the start of the block into view
+        if (blockRect.height > containerRect.height - 40) {
+          lastBlock.scrollIntoView({ behavior: 'smooth', block: 'start' })
         } else {
           container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
         }
-        handleScroll()
-      }, 60)
-    })
+      } else {
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
+      }
+    }, 60)
   }
 }
 
-function goToStep(targetIdx, isAutoAdvance = false) {
+function goToStep(targetIdx) {
   clearAutoAdvanceTimer()
-  pendingNextStep.value = null
-  isScrollOverflowActive.value = false
+  if (targetIdx < 0) targetIdx = 0
+  if (targetIdx >= stepsList.value.length) targetIdx = Math.max(0, stepsList.value.length - 1)
 
-  const steps = stepsList.value
-  if (!steps || steps.length === 0) {
-    subStepIdx.value = 0
-    finished.value = false
-    log.value = [{
-      kind: 'lesson',
-      chapterNum: chapterNum.value,
-      title: chapterTitle.value,
-      teach: teachList.value,
-      note: null,
-      ask: null
-    }]
-    scrollLog()
-    focusInput()
-    return
-  }
-
-  const clampedIdx = Math.max(0, Math.min(targetIdx, steps.length - 1))
-  subStepIdx.value = clampedIdx
+  subStepIdx.value = targetIdx
   finished.value = false
 
   const newLog = []
+  const firstSub = stepsList.value[0] || null
 
-  for (let i = 0; i <= clampedIdx; i++) {
-    const st = steps[i]
-    if (!st) continue
+  newLog.push({
+    kind: 'lesson',
+    chapterNum: chapterNum.value,
+    title: chapterTitle.value,
+    teach: teachList.value,
+    note: firstSub ? firstSub.note : null,
+    ask: firstSub ? firstSub.ask : null
+  })
 
-    if (i === 0) {
-      newLog.push({
-        kind: 'lesson',
-        chapterNum: chapterNum.value,
-        title: chapterTitle.value,
-        teach: teachList.value,
-        note: st.note || null,
-        ask: st.ask || null
-      })
-    } else {
-      if (st.ask) {
-        newLog.push({
-          kind: 'prompt_next',
-          stepIndex: i,
-          totalSteps: steps.length,
-          note: st.note || null,
-          ask: st.ask || null
-        })
-      }
-    }
-
-    if (i < clampedIdx) {
-      // Replay completed step response
-      if (st.ask) {
-        newLog.push({ kind: 'echo', text: st.ask })
-        const rawRes = st.response || mumeResponses.value[st.ask.toLowerCase()] || ''
+  for (let i = 0; i < targetIdx; i++) {
+    const step = stepsList.value[i]
+    if (step) {
+      if (step.ask) {
+        newLog.push({ kind: 'echo', text: step.ask })
+        const rawRes = step.response || step.example || mumeResponses.value[step.ask.toLowerCase()] || ''
         const body = rawRes ? rawRes.replace(/^>[^\n]*\n?/, '') : ''
         if (body) {
           newLog.push({ kind: 'example', body })
         }
-      } else if (st.text || st.response) {
+      } else if (step.text || step.response) {
         newLog.push({
           kind: 'story',
-          body: st.text || st.response
+          body: step.text || step.response
+        })
+      }
+
+      const nextSub = stepsList.value[i + 1]
+      if (nextSub && nextSub.ask) {
+        newLog.push({
+          kind: 'prompt_next',
+          stepIndex: i + 1,
+          totalSteps: stepsList.value.length,
+          note: nextSub.note || null,
+          ask: nextSub.ask
         })
       }
     }
   }
 
   log.value = newLog
+  scrollLog()
 
-  const activeStep = steps[clampedIdx]
-  if (activeStep && !activeStep.ask && (activeStep.text || activeStep.response)) {
-    pushLogItem({
+  const curSub = currentSubStep.value
+  if (curSub && !curSub.ask && (curSub.text || curSub.response)) {
+    log.value.push({
       kind: 'story',
-      body: activeStep.text || activeStep.response
+      body: curSub.text || curSub.response
     })
-    if (isAutoAdvance && typeof window !== 'undefined') {
-      if (isPagerActive.value) {
-        pendingNextStep.value = () => triggerNextStep()
-      } else {
-        autoAdvanceTimer.value = setTimeout(() => {
-          triggerNextStep()
-        }, 250)
-      }
-    } else {
-      scrollLog()
-      focusInput()
-    }
-  } else {
     scrollLog()
+    autoAdvanceTimer = setTimeout(() => {
+      advanceSubStep()
+    }, 250)
+  } else {
     focusInput()
   }
 }
 
 function renderStepLog() {
-  goToStep(0, false)
+  goToStep(0)
 }
 
 function completeChapter() {
   finished.value = true
-  pushLogItem({
+  log.value.push({
     kind: 'chapter_complete',
     chapterNum: chapterNum.value,
     title: chapterTitle.value,
     nextUrl: nextChapterUrl.value
   })
+  scrollLog()
 }
 
 function advanceNext() {
@@ -398,46 +362,32 @@ function advanceNext() {
   }
 }
 
-function triggerNextStep() {
+function advanceSubStep() {
+  clearAutoAdvanceTimer()
   if (subStepIdx.value < stepsList.value.length - 1) {
     subStepIdx.value++
     const nextSub = currentSubStep.value
-    if (nextSub) {
-      if (nextSub.ask) {
-        log.value.push({
-          kind: 'prompt_next',
-          stepIndex: subStepIdx.value,
-          totalSteps: stepsList.value.length,
-          note: nextSub.note || null,
-          ask: nextSub.ask || null
-        })
-      }
-      if (!nextSub.ask && (nextSub.text || nextSub.response)) {
-        pushLogItem({
-          kind: 'story',
-          body: nextSub.text || nextSub.response
-        })
-        if (typeof window !== 'undefined') {
-          if (isPagerActive.value) {
-            pendingNextStep.value = () => triggerNextStep()
-          } else {
-            autoAdvanceTimer.value = setTimeout(() => {
-              triggerNextStep()
-            }, 250)
-          }
-        }
-      }
-    }
-  } else {
-    completeChapter()
-  }
-}
 
-function advanceSubStep() {
-  if (subStepIdx.value < stepsList.value.length - 1) {
-    goToStep(subStepIdx.value + 1, true)
-  } else if (nextChapterUrl.value) {
-    navigateToUrl(nextChapterUrl.value)
+    if (nextSub.ask) {
+      log.value.push({
+        kind: 'prompt_next',
+        stepIndex: subStepIdx.value,
+        totalSteps: stepsList.value.length,
+        note: nextSub.note || null,
+        ask: nextSub.ask
+      })
+      scrollLog()
+      focusInput()
+    } else if (nextSub.text || nextSub.response) {
+      log.value.push({
+        kind: 'story',
+        body: nextSub.text || nextSub.response
+      })
+      scrollLog()
+      autoAdvanceTimer = setTimeout(() => {
+        advanceSubStep()
+      }, 250)
+    }
   } else {
     completeChapter()
   }
@@ -445,26 +395,21 @@ function advanceSubStep() {
 
 function prevSubStep() {
   if (subStepIdx.value > 0) {
-    goToStep(subStepIdx.value - 1, false)
-  } else if (prevChapterUrl.value) {
-    navigateToUrl(prevChapterUrl.value)
+    goToStep(subStepIdx.value - 1)
   }
 }
 
 function submit() {
-  // If pager is active when submitting, advance or flush pager first if input is empty
-  if (isPagerActive.value) {
-    if (!entry.value.trim()) {
-      advancePager()
-      focusInput()
-      return
-    } else {
-      flushPager()
-    }
-  }
-
   const raw = entry.value.trim()
   const cmd = raw.toLowerCase()
+
+  // Handle Pager Mode when input is empty and overflow is active
+  if (isScrollOverflowActive.value && !raw && !finished.value) {
+    pageForward()
+    focusInput()
+    return
+  }
+
   entry.value = ''
 
   if (finished.value) {
@@ -477,7 +422,11 @@ function submit() {
     return
   }
 
-  if (raw) { pushLogItem({ kind: 'echo', text: raw }) }
+  if (isScrollOverflowActive.value) {
+    flushPager()
+  }
+
+  if (raw) { log.value.push({ kind: 'echo', text: raw }) }
 
   if (cmd === 'skip') { advanceNext(); focusInput(); return }
   if (cmd === 'tutorial') { navigateToUrl(allChapters[0]?.url || '/play/tutorial/1-orientation'); focusInput(); return }
@@ -486,7 +435,8 @@ function submit() {
 
   if (!curStep) {
     if (cmd && mumeResponses.value[cmd]) {
-      pushLogItem({ kind: 'example', body: mumeResponses.value[cmd] })
+      log.value.push({ kind: 'example', body: mumeResponses.value[cmd] })
+      scrollLog()
     } else {
       advanceNext()
     }
@@ -495,7 +445,8 @@ function submit() {
   }
 
   if (!cmd) {
-    pushLogItem({ kind: 'error', text: curStep.hint || (`Type: ${curStep.ask}`) })
+    log.value.push({ kind: 'error', text: curStep.hint || (`Type: ${curStep.ask}`) })
+    scrollLog()
     focusInput()
     return
   }
@@ -507,18 +458,16 @@ function submit() {
     const rawRes = curStep.response || curStep.example || mumeResponses.value[cmd] || ''
     const body = rawRes ? rawRes.replace(/^>[^\n]*\n?/, '') : ''
     if (body) {
-      pushLogItem({ kind: 'example', body })
+      log.value.push({ kind: 'example', body })
     }
-    if (isPagerActive.value) {
-      pendingNextStep.value = () => triggerNextStep()
-    } else {
-      triggerNextStep()
-    }
+    advanceSubStep()
   } else if (mumeResponses.value[cmd]) {
-    pushLogItem({ kind: 'example', body: mumeResponses.value[cmd] })
-    pushLogItem({ kind: 'error', text: 'Good try! To proceed in this step, ' + (curStep.hint || (`try: ${curStep.ask}`)) })
+    log.value.push({ kind: 'example', body: mumeResponses.value[cmd] })
+    log.value.push({ kind: 'error', text: 'Good try! To proceed in this step, ' + (curStep.hint || (`try: ${curStep.ask}`)) })
+    scrollLog()
   } else {
-    pushLogItem({ kind: 'error', text: 'MUME does not know that one here. ' + (curStep.hint || (`Try: ${curStep.ask}`)) })
+    log.value.push({ kind: 'error', text: 'MUME does not know that one here. ' + (curStep.hint || (`Try: ${curStep.ask}`)) })
+    scrollLog()
   }
   focusInput()
 }
@@ -527,7 +476,7 @@ watch(() => route.path, () => {
   renderStepLog()
 }, { immediate: true })
 
-let resizeObserver = null
+let logResizeObserver = null
 
 onMounted(() => {
   renderStepLog()
@@ -540,23 +489,22 @@ onMounted(() => {
     window.addEventListener('keydown', handleKeydown)
     document.addEventListener('fullscreenchange', handleFullscreenChange)
 
-    if (typeof ResizeObserver !== 'undefined' && logEl.value) {
-      resizeObserver = new ResizeObserver(() => {
-        checkScrollOverflow()
+    if (logEl.value && typeof ResizeObserver !== 'undefined') {
+      logResizeObserver = new ResizeObserver(() => {
+        updatePagerState()
       })
-      resizeObserver.observe(logEl.value)
+      logResizeObserver.observe(logEl.value)
     }
   }
 })
 
 onUnmounted(() => {
-  clearAutoAdvanceTimer()
   if (typeof window !== 'undefined') {
     window.removeEventListener('keydown', handleKeydown)
     document.removeEventListener('fullscreenchange', handleFullscreenChange)
-    if (resizeObserver) {
-      resizeObserver.disconnect()
-      resizeObserver = null
+    if (logResizeObserver) {
+      logResizeObserver.disconnect()
+      logResizeObserver = null
     }
     if (isExpanded.value && typeof document !== 'undefined') {
       document.body.style.overflow = ''
@@ -617,7 +565,7 @@ onUnmounted(() => {
 
       <div class="tut-body" :class="{ 'has-sheet': isSheetOpen }">
         <div class="tut-term">
-          <div class="tut-log" ref="logEl" @load.capture="checkScrollOverflow" @scroll="handleScroll" aria-live="polite" aria-atomic="false">
+          <div class="tut-log" ref="logEl" aria-live="polite" aria-atomic="false" @scroll="handleScroll" @load.capture="updatePagerState">
             <div v-for="(b, i) in log" :key="i" class="tut-block">
               <template v-if="b.kind === 'lesson'">
                 <!-- Chapter Intro Card -->
@@ -646,7 +594,7 @@ onUnmounted(() => {
 
               <template v-else-if="b.kind === 'prompt_next'">
                 <!-- High-contrast Quest Action Card for Next Steps -->
-                <div class="tut-quest-card" v-if="b.ask">
+                <div class="tut-quest-card">
                   <div class="tut-quest-header">
                     <span class="tut-quest-badge"><i class="fa fa-compass" aria-hidden="true"></i> QUEST</span>
                     <span class="tut-quest-sub">ACTION REQUIRED</span>
@@ -704,25 +652,18 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Sticky Pager Banner for Desktop & Touch Devices -->
-          <div v-if="isPagerActive" class="tut-pager-banner" @click="advancePager">
-            <span class="tut-pager-text">
-              <i class="fa fa-chevron-down" aria-hidden="true"></i>
-              <span>[ MORE &mdash; Page {{ currentPagerIndex }} of {{ currentPagerTotal }} &mdash; Press Space/Enter or Tap ]</span>
-            </span>
-            <button type="button" class="tut-pager-btn" @click.stop="advancePager" aria-label="Next Page">
-              More &darr;
-            </button>
-          </div>
-
-          <div class="tut-prompt">
+          <div class="tut-prompt" :class="{ 'is-pager': isScrollOverflowActive && !isScrolling }" @click="isScrollOverflowActive && !entry ? pageForward() : focusInput()">
             <span class="tut-caret">&gt;</span>
             <input ref="inputEl" v-model="entry" @keydown.enter.prevent="submit"
                    autocomplete="off" spellcheck="false"
-                   :placeholder="isPagerActive ? 'Press Space, Enter, or Tap More...' : (finished ? (nextChapterUrl ? 'Press Enter to continue to next chapter...' : 'Tutorial complete — press Enter for options') : (currentSubStep && !currentSubStep.ask ? 'Press Enter to continue...' : 'type here, then press Enter'))"
+                   :placeholder="isScrollOverflowActive && !isScrolling && !entry ? `[ MORE — Page ${currentPageNum} of ${totalPagesNum} — Press Space/Enter or Tap ]` : (finished ? (nextChapterUrl ? 'Press Enter to continue to next chapter...' : 'Tutorial complete — press Enter for options') : 'type here, then press Enter')"
                    aria-label="Type a command" />
-            <button type="button" class="tut-send-btn" @click="submit" aria-label="Send Command">
-              {{ isPagerActive ? 'More' : (finished ? (nextChapterUrl ? 'Next' : 'Options') : (currentSubStep && !currentSubStep.ask ? 'Next' : 'Send')) }}
+            <button type="button"
+                    class="tut-send-btn"
+                    :class="{ 'tut-pager-btn': isScrollOverflowActive && !isScrolling && !entry }"
+                    @click.stop="submit"
+                    aria-label="Send Command">
+              {{ (isScrollOverflowActive && !isScrolling && !entry) ? 'More ↓' : (finished ? (nextChapterUrl ? 'Next' : 'Options') : 'Send') }}
             </button>
           </div>
         </div>
@@ -790,23 +731,23 @@ onUnmounted(() => {
           </button>
 
           <!-- Prev Step < -->
-          <button type="button" class="tut-nav-btn" :disabled="subStepIdx === 0 && !prevChapterUrl" @click="prevSubStep" title="Previous Step (<)">
+          <button type="button" class="tut-nav-btn" :disabled="subStepIdx === 0 || stepsList.length <= 1" @click="prevSubStep" title="Previous Step (<)">
             &lsaquo;
           </button>
 
           <!-- Integrated Step Indicator Pills -->
           <div class="tut-step-pills" v-if="stepsList.length > 1">
             <button v-for="(st, sIdx) in stepsList" :key="sIdx"
-                    type="button"
-                    class="tut-step-pill tut-step-pill-btn"
-                    :class="{ active: sIdx === subStepIdx, done: sIdx < subStepIdx }"
-                    :title="'Jump to Step ' + (sIdx + 1) + ' of ' + stepsList.length"
-                    @click="goToStep(sIdx, false)"></button>
+                  type="button"
+                  class="tut-step-pill tut-step-pill-btn"
+                  :class="{ active: sIdx === subStepIdx, done: sIdx < subStepIdx }"
+                  :title="'Jump to Step ' + (sIdx + 1) + ' of ' + stepsList.length"
+                  @click="goToStep(sIdx)"></button>
           </div>
           <span v-else class="tut-ch-badge">Ch {{ chapterNum }}</span>
 
           <!-- Next Step > -->
-          <button type="button" class="tut-nav-btn" :disabled="subStepIdx >= stepsList.length - 1 && !nextChapterUrl" @click="advanceSubStep" title="Next Step (>)">
+          <button type="button" class="tut-nav-btn" :disabled="subStepIdx >= stepsList.length - 1 || stepsList.length <= 1" @click="advanceSubStep" title="Next Step (>)">
             &rsaquo;
           </button>
 
@@ -844,9 +785,9 @@ onUnmounted(() => {
   background: rgba(215, 166, 63, 0.6);
 }
 
-.tut-head { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-bottom: 1px solid rgba(215,166,63,.25); background: linear-gradient(180deg,#15130c,#0b0b0d); flex-wrap: wrap; position: relative; }
+.tut-head { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-bottom: 1px solid rgba(215,166,63,.25); background: linear-gradient(180deg,#15130c,#0b0b0d); flex-wrap: wrap; }
 .tut-logo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex: none; }
-.tut-heading { display: flex; flex-direction: column; line-height: 1.15; margin-right: auto; padding-right: 70px; }
+.tut-heading { display: flex; flex-direction: column; line-height: 1.15; margin-right: auto; }
 .tut-title { font-family: 'Kelt', serif; color: #f4dd94; font-size: 22px; }
 .tut-sub { color: #9a927f; font-size: 12.5px; }
 .tut-progress { display: flex; align-items: center; gap: 10px; }
@@ -858,8 +799,7 @@ onUnmounted(() => {
 .tut-tick.clickable:hover { background: #ffd966; transform: scale(1.25); }
 .tut-step { color: #9a927f; font-size: 12.5px; white-space: nowrap; }
 
-.tut-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-.tut-exit-btn { order: 99; margin-left: auto; }
+.tut-actions { display: flex; align-items: center; gap: 8px; margin-left: 8px; }
 
 @keyframes tutPulseHint {
   0% { box-shadow: 0 0 0 0 rgba(215, 166, 63, 0.4); }
@@ -1087,28 +1027,23 @@ onUnmounted(() => {
 .tut-secondary-link:hover, .tut-secondary-link:focus-visible { background: darkgoldenrod; color: #3a3a3a !important; text-decoration: none !important; }
 .tut-note { color: #8f8a7d; font-size: 12.5px; margin: 4px 0 6px; }
 
-.tut-pager-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(184, 134, 11, 0.25);
-  border-top: 1px solid rgba(215, 166, 63, 0.5);
-  border-bottom: 1px solid rgba(215, 166, 63, 0.3);
-  padding: 8px 16px;
-  cursor: pointer;
-  color: #f4dd94;
-  font-family: 'DejaVu Sans Mono', Menlo, Consolas, monospace;
-  font-size: 13px;
-  user-select: none;
-  animation: tutPulseHint 2s infinite;
-}
-.tut-pager-text { display: flex; align-items: center; gap: 8px; font-weight: bold; }
-.tut-pager-btn { background: gold; color: #111; border: none; border-radius: 12px; padding: 2px 10px; font-weight: bold; font-size: 12px; cursor: pointer; }
-
-.tut-prompt { display: flex; align-items: center; gap: 8px; border-top: 1px solid #23262e; padding: 12px 18px; background: #08080a; }
+.tut-prompt { display: flex; align-items: center; gap: 8px; border-top: 1px solid #23262e; padding: 12px 18px; background: #08080a; transition: background 0.25s, border-color 0.25s; }
+.tut-prompt.is-pager { background: linear-gradient(180deg, #18150c, #0a0b0e); border-top-color: rgba(215, 166, 63, 0.5); cursor: pointer; }
+.tut-prompt.is-pager input::placeholder { color: #f4dd94; font-weight: bold; }
 .tut-caret { color: #d8b04a; font-family: 'DejaVu Sans Mono', Menlo, Consolas, monospace; }
 .tut-prompt input { flex: 1; background: transparent; border: none; outline: none; color: #eaeaea; font-family: 'DejaVu Sans Mono', Menlo, Consolas, monospace; font-size: 14px; }
 .tut-prompt input::placeholder { color: #5f5f5f; }
+
+.tut-send-btn.tut-pager-btn {
+  background: #f4dd94;
+  color: #111;
+  box-shadow: 0 0 10px rgba(244, 221, 148, 0.4);
+  animation: tutPulseHint 2s infinite;
+}
+.tut-send-btn.tut-pager-btn:hover {
+  background: #ffffff;
+  color: #000;
+}
 
 .tut-sheet { border-left: 1px solid #23262e; background: #08090c; display: none; flex-direction: column; }
 .tut-body.has-sheet .tut-sheet { display: flex; }
@@ -1203,7 +1138,7 @@ onUnmounted(() => {
   max-height: calc(100vh - 120px);
 }
 
-.tut-send-btn { background: darkgoldenrod; border: none; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; padding: 4px 12px; border-radius: 14px; cursor: pointer; font-weight: bold; }
+.tut-send-btn { background: darkgoldenrod; border: none; color: #fff; font-family: 'Kelt', serif; font-size: 13px; padding: 4px 12px; border-radius: 14px; cursor: pointer; font-weight: bold; }
 
 .tut-sheet-close { display: block; background: none; border: none; color: #9a927f; font-size: 20px; cursor: pointer; padding: 0 4px; }
 .tut-sheet-close:hover { color: #f4dd94; }
@@ -1336,8 +1271,8 @@ onUnmounted(() => {
 .tut-ch-badge { color: #9a927f; font-size: 12px; padding: 0 6px; }
 
 .tut-step-pills { display: flex; align-items: center; gap: 4px; padding: 0 6px; }
-.tut-step-pill { width: 12px; height: 4px; border-radius: 2px; background: #2a2a2a; transition: background .2s, width .2s; }
-.tut-step-pill-btn { border: none; padding: 0; cursor: pointer; }
+.tut-step-pill { width: 12px; height: 4px; border-radius: 2px; background: #2a2a2a; transition: background .2s, width .2s; border: none; padding: 0; }
+.tut-step-pill-btn { cursor: pointer; }
 .tut-step-pill-btn:hover { background: #ffd966; }
 .tut-step-pill.done { background: #a9812a; }
 .tut-step-pill.active { background: #f4dd94; width: 20px; box-shadow: 0 0 6px rgba(244,221,148,.5); }
@@ -1345,9 +1280,6 @@ onUnmounted(() => {
 @media (max-width: 720px) {
   .tut { margin: 0.5rem 0 1rem; }
   .tut-head { flex-wrap: wrap; gap: 6px 8px; padding: 8px 10px; }
-  .tut-heading { padding-right: 60px; }
-  .tut-actions { width: 100%; justify-content: flex-start; margin-left: 0; }
-  .tut-exit-btn { position: absolute; top: 8px; right: 10px; margin-left: 0; z-index: 10; }
   .tut-title { font-size: 18px; }
   .tut-sub { font-size: 11px; }
   .tut-progress { width: 100%; justify-content: space-between; margin-top: 2px; flex-wrap: wrap; gap: 4px; }
