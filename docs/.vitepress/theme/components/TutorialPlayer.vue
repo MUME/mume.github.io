@@ -97,6 +97,12 @@ const isSheetOpen = ref(false)
 const isExpanded = ref(false)
 const isModalOpen = ref(false)
 
+// Reactive Pager State
+const pendingPagerChunks = ref([]) // Remaining unrevealed chunks
+const currentPagerTotal = ref(1)
+const currentPagerIndex = ref(1)
+const isPagerActive = computed(() => pendingPagerChunks.value.length > 0)
+
 function openModal() {
   isModalOpen.value = true
 }
@@ -135,12 +141,74 @@ function handleFullscreenChange() {
   }
 }
 
+function advancePager() {
+  if (!isPagerActive.value) return
+  const nextChunk = pendingPagerChunks.value.shift()
+  if (nextChunk) {
+    log.value.push(nextChunk)
+    currentPagerIndex.value++
+    scrollLog()
+  }
+}
+
+function flushPager() {
+  while (pendingPagerChunks.value.length > 0) {
+    const chunk = pendingPagerChunks.value.shift()
+    if (chunk) log.value.push(chunk)
+  }
+  scrollLog()
+}
+
 function handleKeydown(e) {
   if (e.key === 'Escape' && isExpanded.value) {
     if (!document.fullscreenElement) {
       toggleExpand()
     }
+  } else if (isPagerActive.value) {
+    // Only intercept Space key for pager if target is body or input field is empty
+    if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'PageDown') {
+      if (e.target === document.body || (e.target === inputEl.value && !entry.value)) {
+        e.preventDefault()
+        advancePager()
+      }
+    } else if (e.key === 'Enter' && e.target !== inputEl.value) {
+      e.preventDefault()
+      advancePager()
+    }
   }
+}
+
+function pushLogItem(item) {
+  // If item is an example or story with multiline body, check if it needs paging
+  if ((item.kind === 'example' || item.kind === 'story') && item.body) {
+    const lines = item.body.split('\n')
+    // Chunk threshold: if lines > 8
+    if (lines.length > 8) {
+      const chunks = []
+      const chunkSize = 6
+      for (let i = 0; i < lines.length; i += chunkSize) {
+        chunks.push(lines.slice(i, i + chunkSize).join('\n'))
+      }
+
+      // First chunk is pushed immediately
+      item.body = chunks[0]
+      log.value.push(item)
+
+      // Remaining chunks placed in queue
+      const remaining = chunks.slice(1).map(c => ({
+        kind: item.kind,
+        body: c
+      }))
+      pendingPagerChunks.value = remaining
+      currentPagerIndex.value = 1
+      currentPagerTotal.value = chunks.length
+      scrollLog()
+      return
+    }
+  }
+
+  log.value.push(item)
+  scrollLog()
 }
 
 const logEl = ref(null)
@@ -192,46 +260,101 @@ function scrollLog() {
   }
 }
 
-function renderStepLog() {
-  subStepIdx.value = 0
+function goToStep(targetIdx) {
+  pendingPagerChunks.value = []
+  const steps = stepsList.value
+  if (!steps || steps.length === 0) {
+    subStepIdx.value = 0
+    finished.value = false
+    log.value = [{
+      kind: 'lesson',
+      chapterNum: chapterNum.value,
+      title: chapterTitle.value,
+      teach: teachList.value,
+      note: null,
+      ask: null
+    }]
+    scrollLog()
+    focusInput()
+    return
+  }
+
+  const clampedIdx = Math.max(0, Math.min(targetIdx, steps.length - 1))
+  subStepIdx.value = clampedIdx
   finished.value = false
 
   const newLog = []
-  newLog.push({
-    kind: 'lesson',
-    chapterNum: chapterNum.value,
-    title: chapterTitle.value,
-    teach: teachList.value,
-    note: currentSubStep.value ? currentSubStep.value.note : null,
-    ask: currentSubStep.value ? currentSubStep.value.ask : null
-  })
+
+  for (let i = 0; i <= clampedIdx; i++) {
+    const st = steps[i]
+    if (!st) continue
+
+    if (i === 0) {
+      newLog.push({
+        kind: 'lesson',
+        chapterNum: chapterNum.value,
+        title: chapterTitle.value,
+        teach: teachList.value,
+        note: st.note || null,
+        ask: st.ask || null
+      })
+    } else {
+      newLog.push({
+        kind: 'prompt_next',
+        stepIndex: i,
+        totalSteps: steps.length,
+        note: st.note || null,
+        ask: st.ask || null
+      })
+    }
+
+    if (i < clampedIdx) {
+      // Replay completed step response
+      if (st.ask) {
+        newLog.push({ kind: 'echo', text: st.ask })
+        const rawRes = st.response || mumeResponses.value[st.ask.toLowerCase()] || ''
+        const body = rawRes ? rawRes.replace(/^>[^\n]*\n?/, '') : ''
+        if (body) {
+          newLog.push({ kind: 'example', body })
+        }
+      } else if (st.text || st.response) {
+        newLog.push({
+          kind: 'story',
+          body: st.text || st.response
+        })
+      }
+    }
+  }
 
   log.value = newLog
-  scrollLog()
 
-  if (currentSubStep.value && !currentSubStep.value.ask && (currentSubStep.value.text || currentSubStep.value.response)) {
-    log.value.push({
+  const activeStep = steps[clampedIdx]
+  if (activeStep && !activeStep.ask && (activeStep.text || activeStep.response)) {
+    pushLogItem({
       kind: 'story',
-      body: currentSubStep.value.text || currentSubStep.value.response
+      body: activeStep.text || activeStep.response
     })
-    scrollLog()
     setTimeout(() => {
       advanceSubStep()
     }, 250)
   } else {
+    scrollLog()
     focusInput()
   }
 }
 
+function renderStepLog() {
+  goToStep(0)
+}
+
 function completeChapter() {
   finished.value = true
-  log.value.push({
+  pushLogItem({
     kind: 'chapter_complete',
     chapterNum: chapterNum.value,
     title: chapterTitle.value,
     nextUrl: nextChapterUrl.value
   })
-  scrollLog()
 }
 
 function advanceNext() {
@@ -244,29 +367,7 @@ function advanceNext() {
 
 function advanceSubStep() {
   if (subStepIdx.value < stepsList.value.length - 1) {
-    subStepIdx.value++
-    const nextSub = currentSubStep.value
-
-    if (nextSub.ask) {
-      log.value.push({
-        kind: 'prompt_next',
-        stepIndex: subStepIdx.value,
-        totalSteps: stepsList.value.length,
-        note: nextSub.note || null,
-        ask: nextSub.ask
-      })
-      scrollLog()
-      focusInput()
-    } else if (nextSub.text || nextSub.response) {
-      log.value.push({
-        kind: 'story',
-        body: nextSub.text || nextSub.response
-      })
-      scrollLog()
-      setTimeout(() => {
-        advanceSubStep()
-      }, 250)
-    }
+    goToStep(subStepIdx.value + 1)
   } else {
     completeChapter()
   }
@@ -274,20 +375,22 @@ function advanceSubStep() {
 
 function prevSubStep() {
   if (subStepIdx.value > 0) {
-    subStepIdx.value--
-    const prevSub = currentSubStep.value
-    log.value.push({
-      kind: 'prompt_prev',
-      stepIndex: subStepIdx.value,
-      totalSteps: stepsList.value.length,
-      note: prevSub.note || null,
-      ask: prevSub.ask
-    })
-    scrollLog()
+    goToStep(subStepIdx.value - 1)
   }
 }
 
 function submit() {
+  // If pager is active when submitting, advance or flush pager first if input is empty
+  if (isPagerActive.value) {
+    if (!entry.value.trim()) {
+      advancePager()
+      focusInput()
+      return
+    } else {
+      flushPager()
+    }
+  }
+
   const raw = entry.value.trim()
   const cmd = raw.toLowerCase()
   entry.value = ''
@@ -302,7 +405,7 @@ function submit() {
     return
   }
 
-  if (raw) { log.value.push({ kind: 'echo', text: raw }) }
+  if (raw) { pushLogItem({ kind: 'echo', text: raw }) }
 
   if (cmd === 'skip') { advanceNext(); focusInput(); return }
   if (cmd === 'tutorial') { navigateToUrl(allChapters[0]?.url || '/play/tutorial/1-orientation'); focusInput(); return }
@@ -311,8 +414,7 @@ function submit() {
 
   if (!curStep) {
     if (cmd && mumeResponses.value[cmd]) {
-      log.value.push({ kind: 'example', body: mumeResponses.value[cmd] })
-      scrollLog()
+      pushLogItem({ kind: 'example', body: mumeResponses.value[cmd] })
     } else {
       advanceNext()
     }
@@ -321,8 +423,7 @@ function submit() {
   }
 
   if (!cmd) {
-    log.value.push({ kind: 'error', text: curStep.hint || (`Type: ${curStep.ask}`) })
-    scrollLog()
+    pushLogItem({ kind: 'error', text: curStep.hint || (`Type: ${curStep.ask}`) })
     focusInput()
     return
   }
@@ -334,16 +435,34 @@ function submit() {
     const rawRes = curStep.response || curStep.example || mumeResponses.value[cmd] || ''
     const body = rawRes ? rawRes.replace(/^>[^\n]*\n?/, '') : ''
     if (body) {
-      log.value.push({ kind: 'example', body })
+      pushLogItem({ kind: 'example', body })
     }
-    advanceSubStep()
+    if (subStepIdx.value < stepsList.value.length - 1) {
+      subStepIdx.value++
+      const nextSub = currentSubStep.value
+      if (nextSub) {
+        log.value.push({
+          kind: 'prompt_next',
+          stepIndex: subStepIdx.value,
+          totalSteps: stepsList.value.length,
+          note: nextSub.note || null,
+          ask: nextSub.ask || null
+        })
+        if (!nextSub.ask && (nextSub.text || nextSub.response)) {
+          pushLogItem({
+            kind: 'story',
+            body: nextSub.text || nextSub.response
+          })
+        }
+      }
+    } else {
+      completeChapter()
+    }
   } else if (mumeResponses.value[cmd]) {
-    log.value.push({ kind: 'example', body: mumeResponses.value[cmd] })
-    log.value.push({ kind: 'error', text: 'Good try! To proceed in this step, ' + (curStep.hint || (`try: ${curStep.ask}`)) })
-    scrollLog()
+    pushLogItem({ kind: 'example', body: mumeResponses.value[cmd] })
+    pushLogItem({ kind: 'error', text: 'Good try! To proceed in this step, ' + (curStep.hint || (`try: ${curStep.ask}`)) })
   } else {
-    log.value.push({ kind: 'error', text: 'MUME does not know that one here. ' + (curStep.hint || (`Try: ${curStep.ask}`)) })
-    scrollLog()
+    pushLogItem({ kind: 'error', text: 'MUME does not know that one here. ' + (curStep.hint || (`Try: ${curStep.ask}`)) })
   }
   focusInput()
 }
@@ -515,14 +634,25 @@ onUnmounted(() => {
             </div>
           </div>
 
+          <!-- Sticky Pager Banner for Desktop & Touch Devices -->
+          <div v-if="isPagerActive" class="tut-pager-banner" @click="advancePager">
+            <span class="tut-pager-text">
+              <i class="fa fa-chevron-down" aria-hidden="true"></i>
+              <span>[ MORE &mdash; Page {{ currentPagerIndex }} of {{ currentPagerTotal }} &mdash; Press Space/Enter or Tap ]</span>
+            </span>
+            <button type="button" class="tut-pager-btn" @click.stop="advancePager" aria-label="Next Page">
+              More &darr;
+            </button>
+          </div>
+
           <div class="tut-prompt">
             <span class="tut-caret">&gt;</span>
             <input ref="inputEl" v-model="entry" @keydown.enter.prevent="submit"
                    autocomplete="off" spellcheck="false"
-                   :placeholder="finished ? (nextChapterUrl ? 'Press Enter to continue to next chapter...' : 'Tutorial complete — press Enter for options') : 'type here, then press Enter'"
+                   :placeholder="isPagerActive ? 'Press Space, Enter, or Tap More...' : (finished ? (nextChapterUrl ? 'Press Enter to continue to next chapter...' : 'Tutorial complete — press Enter for options') : 'type here, then press Enter')"
                    aria-label="Type a command" />
             <button type="button" class="tut-send-btn" @click="submit" aria-label="Send Command">
-              {{ finished ? (nextChapterUrl ? 'Next' : 'Options') : 'Send' }}
+              {{ isPagerActive ? 'More' : (finished ? (nextChapterUrl ? 'Next' : 'Options') : 'Send') }}
             </button>
           </div>
         </div>
@@ -596,10 +726,12 @@ onUnmounted(() => {
 
           <!-- Integrated Step Indicator Pills -->
           <div class="tut-step-pills" v-if="stepsList.length > 1">
-            <span v-for="(st, sIdx) in stepsList" :key="sIdx"
-                  class="tut-step-pill"
-                  :class="{ active: sIdx === subStepIdx, done: sIdx < subStepIdx }"
-                  :title="'Step ' + (sIdx + 1) + ' of ' + stepsList.length"></span>
+            <button v-for="(st, sIdx) in stepsList" :key="sIdx"
+                    type="button"
+                    class="tut-step-pill tut-step-pill-btn"
+                    :class="{ active: sIdx === subStepIdx, done: sIdx < subStepIdx }"
+                    :title="'Jump to Step ' + (sIdx + 1) + ' of ' + stepsList.length"
+                    @click="goToStep(sIdx)"></button>
           </div>
           <span v-else class="tut-ch-badge">Ch {{ chapterNum }}</span>
 
@@ -642,9 +774,9 @@ onUnmounted(() => {
   background: rgba(215, 166, 63, 0.6);
 }
 
-.tut-head { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-bottom: 1px solid rgba(215,166,63,.25); background: linear-gradient(180deg,#15130c,#0b0b0d); flex-wrap: wrap; }
+.tut-head { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-bottom: 1px solid rgba(215,166,63,.25); background: linear-gradient(180deg,#15130c,#0b0b0d); flex-wrap: wrap; position: relative; }
 .tut-logo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex: none; }
-.tut-heading { display: flex; flex-direction: column; line-height: 1.15; margin-right: auto; }
+.tut-heading { display: flex; flex-direction: column; line-height: 1.15; margin-right: auto; padding-right: 70px; }
 .tut-title { font-family: 'Kelt', serif; color: #f4dd94; font-size: 22px; }
 .tut-sub { color: #9a927f; font-size: 12.5px; }
 .tut-progress { display: flex; align-items: center; gap: 10px; }
@@ -656,7 +788,8 @@ onUnmounted(() => {
 .tut-tick.clickable:hover { background: #ffd966; transform: scale(1.25); }
 .tut-step { color: #9a927f; font-size: 12.5px; white-space: nowrap; }
 
-.tut-actions { display: flex; align-items: center; gap: 8px; margin-left: 8px; }
+.tut-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.tut-exit-btn { order: 99; margin-left: auto; }
 
 @keyframes tutPulseHint {
   0% { box-shadow: 0 0 0 0 rgba(215, 166, 63, 0.4); }
@@ -883,6 +1016,24 @@ onUnmounted(() => {
 .tut-secondary-link { display: inline-block; font-family: 'Kelt', serif; font-size: 1.05rem; background: rgba(10, 13, 21, 0.75); color: white !important; border: 2px solid darkgoldenrod; padding: 0.5em 1.5em; border-radius: 3.75rem; box-shadow: 1px 5px 10px 0px rgba(184, 134, 11, 0.5); text-decoration: none !important; transition: background-color .2s, color .2s; }
 .tut-secondary-link:hover, .tut-secondary-link:focus-visible { background: darkgoldenrod; color: #3a3a3a !important; text-decoration: none !important; }
 .tut-note { color: #8f8a7d; font-size: 12.5px; margin: 4px 0 6px; }
+
+.tut-pager-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(184, 134, 11, 0.25);
+  border-top: 1px solid rgba(215, 166, 63, 0.5);
+  border-bottom: 1px solid rgba(215, 166, 63, 0.3);
+  padding: 8px 16px;
+  cursor: pointer;
+  color: #f4dd94;
+  font-family: 'DejaVu Sans Mono', Menlo, Consolas, monospace;
+  font-size: 13px;
+  user-select: none;
+  animation: tutPulseHint 2s infinite;
+}
+.tut-pager-text { display: flex; align-items: center; gap: 8px; font-weight: bold; }
+.tut-pager-btn { background: gold; color: #111; border: none; border-radius: 12px; padding: 2px 10px; font-weight: bold; font-size: 12px; cursor: pointer; }
 
 .tut-prompt { display: flex; align-items: center; gap: 8px; border-top: 1px solid #23262e; padding: 12px 18px; background: #08080a; }
 .tut-caret { color: #d8b04a; font-family: 'DejaVu Sans Mono', Menlo, Consolas, monospace; }
@@ -1116,12 +1267,17 @@ onUnmounted(() => {
 
 .tut-step-pills { display: flex; align-items: center; gap: 4px; padding: 0 6px; }
 .tut-step-pill { width: 12px; height: 4px; border-radius: 2px; background: #2a2a2a; transition: background .2s, width .2s; }
+.tut-step-pill-btn { border: none; padding: 0; cursor: pointer; }
+.tut-step-pill-btn:hover { background: #ffd966; }
 .tut-step-pill.done { background: #a9812a; }
 .tut-step-pill.active { background: #f4dd94; width: 20px; box-shadow: 0 0 6px rgba(244,221,148,.5); }
 
 @media (max-width: 720px) {
   .tut { margin: 0.5rem 0 1rem; }
   .tut-head { flex-wrap: wrap; gap: 6px 8px; padding: 8px 10px; }
+  .tut-heading { padding-right: 60px; }
+  .tut-actions { width: 100%; justify-content: flex-start; margin-left: 0; }
+  .tut-exit-btn { position: absolute; top: 8px; right: 10px; margin-left: 0; z-index: 10; }
   .tut-title { font-size: 18px; }
   .tut-sub { font-size: 11px; }
   .tut-progress { width: 100%; justify-content: space-between; margin-top: 2px; flex-wrap: wrap; gap: 4px; }
