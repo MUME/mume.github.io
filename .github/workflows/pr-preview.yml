@@ -28,7 +28,7 @@ jobs:
         run: |
           REPO_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
           OWNER_NAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          if [ "$REPO_NAME" = "mume.github.io" ] || [ "$REPO_NAME" = "${OWNER_NAME}.github.io" ]; then
+          if [ "$REPO_NAME" = "${OWNER_NAME}.github.io" ]; then
             echo "prefix=/" >> $GITHUB_OUTPUT
           else
             echo "prefix=/${{ github.event.repository.name }}/" >> $GITHUB_OUTPUT

@@ -45,8 +45,8 @@ for (const htmlFile of htmlFiles) {
   const content = fs.readFileSync(htmlFile, 'utf8')
   const relPath = path.relative(distDir, htmlFile)
 
-  // 1. Check for invalid prefix '/mume.github.io/'
-  if (content.includes('/mume.github.io/')) {
+  // 1. Check for invalid prefix '/mume.github.io/' if expectedBase does not contain it
+  if (!expectedBase.includes('/mume.github.io/') && content.includes('/mume.github.io/')) {
     errors.push(`${relPath}: Contains invalid hardcoded path prefix '/mume.github.io/'`)
   }
 
@@ -72,7 +72,7 @@ for (const htmlFile of htmlFiles) {
     for (const url of urlParts) {
       if (!url) continue
 
-      if (url.includes('/mume.github.io/')) {
+      if (!expectedBase.includes('/mume.github.io/') && url.includes('/mume.github.io/')) {
         errors.push(`${relPath}: URL "${url}" contains '/mume.github.io/'`)
       }
 
