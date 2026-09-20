@@ -28,12 +28,15 @@ function formatInlineMarkdown(text) {
     const cleanAlt = alt.replace(/"/g, '&quot;')
     let cleanSrc = src.trim().replace(/"/g, '&quot;')
 
-    if (cleanSrc.includes('assets/')) {
-      cleanSrc = '/assets/' + cleanSrc.split('assets/')[1]
-    }
+    // Only rewrite relative public/assets paths, preserving http://, https://, and data: URLs
+    if (!/^(?:https?:\/\/|data:)/i.test(cleanSrc)) {
+      if (cleanSrc.includes('assets/')) {
+        cleanSrc = '/assets/' + cleanSrc.split('assets/')[1]
+      }
 
-    if (cleanSrc.startsWith('/')) {
-      cleanSrc = withBase(cleanSrc)
+      if (cleanSrc.startsWith('/')) {
+        cleanSrc = withBase(cleanSrc)
+      }
     }
 
     return `<img src="${cleanSrc}" alt="${cleanAlt}" class="tut-img-embed" onload="this.dispatchEvent(new Event('load', { bubbles: true }))" />`
@@ -185,7 +188,7 @@ function handleKeydown(e) {
   // Intercept Space or PageDown for paging if output overflow is active and input is empty or unfocused
   if (isScrollOverflowActive.value && !isScrolling.value) {
     const isInputFocused = document.activeElement === inputEl.value
-    if (e.key === 'PageDown' || (e.key === ' ' && (!isInputFocused || !entry.value.trim()))) {
+    if ((e.key === 'PageDown' || e.key === ' ') && (!isInputFocused || !entry.value.trim())) {
       e.preventDefault()
       pageForward()
     }
@@ -317,6 +320,7 @@ function goToStep(targetIdx) {
 
   subStepIdx.value = targetIdx
   finished.value = false
+  entry.value = ''
 
   const newLog = []
   const firstSub = stepsList.value[0] || null
@@ -335,7 +339,15 @@ function goToStep(targetIdx) {
     if (step) {
       if (step.ask) {
         newLog.push({ kind: 'echo', text: step.ask })
-        const rawRes = step.response || step.example || mumeResponses.value[step.ask.toLowerCase()] || ''
+        let rawRes = step.response || step.example || mumeResponses.value[step.ask.toLowerCase()] || ''
+        if (!rawRes && step.accept && step.accept.length) {
+          for (const alias of step.accept) {
+            if (mumeResponses.value[alias.toLowerCase()]) {
+              rawRes = mumeResponses.value[alias.toLowerCase()]
+              break
+            }
+          }
+        }
         const body = rawRes ? rawRes.replace(/^>[^\n]*\n?/, '') : ''
         if (body) {
           newLog.push({ kind: 'example', body })
