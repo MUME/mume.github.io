@@ -3,8 +3,8 @@ title: About MUME
 description: A short explanation on what Multi-Users in Middle-earth is.
 ---
 
-<div style="text-align: center; margin-bottom: 2rem;">
-  <img src="/assets/images/fellowship_bw.jpg" srcset="/assets/images/fellowship_bw.jpg 1x, /assets/images/fellowship_bw@2x.jpg 2x" alt="A short explanation on what Multi-Users in Middle-earth is" style="width: 100%; max-width: 654px; height: auto;" />
+<div class="page-banner">
+  <img src="/assets/images/fellowship_bw.jpg" srcset="/assets/images/fellowship_bw.jpg 1x, /assets/images/fellowship_bw@2x.jpg 2x" alt="A short explanation on what Multi-Users in Middle-earth is" class="banner-img" />
 </div>
 
 # About MUME

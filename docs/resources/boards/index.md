@@ -3,8 +3,8 @@ title: Boards
 description: Multi-Users in Middle-earth message boards including Game News, Starter's, FAQ, Tales, Free People Chronicles, and Orkish Drumlore.
 ---
 
-<div style="text-align: center; margin-bottom: 2rem;">
-  <img src="/assets/images/fellowship_bw.jpg" srcset="/assets/images/fellowship_bw.jpg 1x, /assets/images/fellowship_bw@2x.jpg 2x" alt="Boards" style="width: 100%; max-width: 654px; height: auto;" />
+<div class="page-banner">
+  <img src="/assets/images/fellowship_bw.jpg" srcset="/assets/images/fellowship_bw.jpg 1x, /assets/images/fellowship_bw@2x.jpg 2x" alt="Boards" class="banner-img" />
 </div>
 
 # Boards
