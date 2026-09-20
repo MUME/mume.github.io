@@ -113,6 +113,7 @@ const entry = ref('')
 const isSheetOpen = ref(false)
 const isExpanded = ref(false)
 const isModalOpen = ref(false)
+const activeModalImage = ref(null)
 
 function openModal() {
   isModalOpen.value = true
@@ -120,6 +121,21 @@ function openModal() {
 
 function closeModal() {
   isModalOpen.value = false
+}
+
+function openImageModal(src, alt = '') {
+  activeModalImage.value = { src, alt }
+}
+
+function closeImageModal() {
+  activeModalImage.value = null
+}
+
+function handleLogClick(e) {
+  const target = e.target
+  if (target && target.tagName === 'IMG' && target.classList.contains('tut-img-embed')) {
+    openImageModal(target.src, target.alt)
+  }
 }
 
 function toggleExpand() {
@@ -153,11 +169,17 @@ function handleFullscreenChange() {
 }
 
 function handleKeydown(e) {
-  if (e.key === 'Escape' && isExpanded.value) {
-    if (!document.fullscreenElement) {
-      toggleExpand()
+  if (e.key === 'Escape') {
+    if (activeModalImage.value) {
+      closeImageModal()
+      return
     }
-    return
+    if (isExpanded.value) {
+      if (!document.fullscreenElement) {
+        toggleExpand()
+      }
+      return
+    }
   }
 
   // Intercept Space or PageDown for paging if output overflow is active and input is empty or unfocused
@@ -584,7 +606,7 @@ onUnmounted(() => {
 
       <div class="tut-body" :class="{ 'has-sheet': isSheetOpen }">
         <div class="tut-term">
-          <div class="tut-log" ref="logEl" aria-live="polite" aria-atomic="false" @scroll="handleScroll" @load.capture="updatePagerState">
+          <div class="tut-log" ref="logEl" aria-live="polite" aria-atomic="false" @scroll="handleScroll" @load.capture="updatePagerState" @click="handleLogClick">
             <div v-for="(b, i) in log" :key="i" class="tut-block">
               <template v-if="b.kind === 'lesson'">
                 <!-- Chapter Intro Card -->
@@ -715,6 +737,15 @@ onUnmounted(() => {
       </div>
 
       <div class="tut-sheet-backdrop" v-if="isSheetOpen" @click="isSheetOpen = false"></div>
+
+      <!-- Image Lightbox Modal Overlay -->
+      <div v-if="activeModalImage" class="tut-img-modal-overlay" role="dialog" aria-modal="true" aria-label="Image Preview" @click.self="closeImageModal">
+        <div class="tut-img-modal-card">
+          <button type="button" class="tut-img-modal-close" @click="closeImageModal" aria-label="Close image preview">&times;</button>
+          <img :src="activeModalImage.src" :alt="activeModalImage.alt" class="tut-img-modal-preview" />
+          <div v-if="activeModalImage.alt" class="tut-img-modal-caption">{{ activeModalImage.alt }}</div>
+        </div>
+      </div>
 
       <!-- Modal Overlay for End of Tutorial Options -->
       <div v-if="isModalOpen" class="tut-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="tut-modal-title-id" @click.self="closeModal">
@@ -1030,6 +1061,84 @@ onUnmounted(() => {
   margin: 8px 0;
   display: block;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  cursor: zoom-in;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.tut-img-embed:hover {
+  transform: scale(1.02);
+  border-color: gold;
+}
+
+/* Image Lightbox Modal */
+.tut-img-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(6px);
+  z-index: 100001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: tutStreamIn 0.2s ease-out forwards;
+}
+
+.tut-img-modal-card {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #0b0c0f;
+  border: 1px solid rgba(215, 166, 63, 0.5);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 25px 70px rgba(0,0,0,0.9), 0 0 30px rgba(215, 166, 63, 0.2);
+}
+
+.tut-img-modal-close {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  width: 36px;
+  height: 36px;
+  background: #18191f;
+  border: 1px solid rgba(215, 166, 63, 0.6);
+  color: #f4dd94;
+  font-size: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: background 0.2s, color 0.2s, transform 0.15s;
+}
+.tut-img-modal-close:hover {
+  background: darkgoldenrod;
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+.tut-img-modal-preview {
+  max-width: 85vw;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 6px;
+  border: 1px solid rgba(215, 166, 63, 0.3);
+}
+
+.tut-img-modal-caption {
+  margin-top: 10px;
+  color: #d8b04a;
+  font-size: 13.5px;
+  font-family: 'Kelt', serif;
+  text-align: center;
 }
 
 .tut-complete-box {
