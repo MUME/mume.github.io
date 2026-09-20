@@ -102,6 +102,7 @@ const pendingPagerChunks = ref([]) // Remaining unrevealed chunks
 const currentPagerTotal = ref(1)
 const currentPagerIndex = ref(1)
 const isPagerActive = computed(() => pendingPagerChunks.value.length > 0)
+const pendingNextStep = ref(null)
 
 function openModal() {
   isModalOpen.value = true
@@ -149,6 +150,11 @@ function advancePager() {
     currentPagerIndex.value++
     scrollLog()
   }
+  if (pendingPagerChunks.value.length === 0 && pendingNextStep.value) {
+    const fn = pendingNextStep.value
+    pendingNextStep.value = null
+    fn()
+  }
 }
 
 function flushPager() {
@@ -157,6 +163,11 @@ function flushPager() {
     if (chunk) log.value.push(chunk)
   }
   scrollLog()
+  if (pendingNextStep.value) {
+    const fn = pendingNextStep.value
+    pendingNextStep.value = null
+    fn()
+  }
 }
 
 function handleKeydown(e) {
@@ -262,6 +273,7 @@ function scrollLog() {
 
 function goToStep(targetIdx) {
   pendingPagerChunks.value = []
+  pendingNextStep.value = null
   const steps = stepsList.value
   if (!steps || steps.length === 0) {
     subStepIdx.value = 0
@@ -334,9 +346,13 @@ function goToStep(targetIdx) {
       kind: 'story',
       body: activeStep.text || activeStep.response
     })
-    setTimeout(() => {
-      advanceSubStep()
-    }, 250)
+    if (isPagerActive.value) {
+      pendingNextStep.value = () => triggerNextStep()
+    } else {
+      setTimeout(() => {
+        triggerNextStep()
+      }, 250)
+    }
   } else {
     scrollLog()
     focusInput()
@@ -360,6 +376,37 @@ function completeChapter() {
 function advanceNext() {
   if (nextChapterUrl.value) {
     navigateToUrl(nextChapterUrl.value)
+  } else {
+    completeChapter()
+  }
+}
+
+function triggerNextStep() {
+  if (subStepIdx.value < stepsList.value.length - 1) {
+    subStepIdx.value++
+    const nextSub = currentSubStep.value
+    if (nextSub) {
+      if (nextSub.ask) {
+        log.value.push({
+          kind: 'prompt_next',
+          stepIndex: subStepIdx.value,
+          totalSteps: stepsList.value.length,
+          note: nextSub.note || null,
+          ask: nextSub.ask || null
+        })
+      }
+      if (!nextSub.ask && (nextSub.text || nextSub.response)) {
+        pushLogItem({
+          kind: 'story',
+          body: nextSub.text || nextSub.response
+        })
+        if (isPagerActive.value) {
+          pendingNextStep.value = () => triggerNextStep()
+        } else {
+          triggerNextStep()
+        }
+      }
+    }
   } else {
     completeChapter()
   }
@@ -437,26 +484,10 @@ function submit() {
     if (body) {
       pushLogItem({ kind: 'example', body })
     }
-    if (subStepIdx.value < stepsList.value.length - 1) {
-      subStepIdx.value++
-      const nextSub = currentSubStep.value
-      if (nextSub) {
-        log.value.push({
-          kind: 'prompt_next',
-          stepIndex: subStepIdx.value,
-          totalSteps: stepsList.value.length,
-          note: nextSub.note || null,
-          ask: nextSub.ask || null
-        })
-        if (!nextSub.ask && (nextSub.text || nextSub.response)) {
-          pushLogItem({
-            kind: 'story',
-            body: nextSub.text || nextSub.response
-          })
-        }
-      }
+    if (isPagerActive.value) {
+      pendingNextStep.value = () => triggerNextStep()
     } else {
-      completeChapter()
+      triggerNextStep()
     }
   } else if (mumeResponses.value[cmd]) {
     pushLogItem({ kind: 'example', body: mumeResponses.value[cmd] })
@@ -576,7 +607,7 @@ onUnmounted(() => {
 
               <template v-else-if="b.kind === 'prompt_next'">
                 <!-- High-contrast Quest Action Card for Next Steps -->
-                <div class="tut-quest-card">
+                <div class="tut-quest-card" v-if="b.ask">
                   <div class="tut-quest-header">
                     <span class="tut-quest-badge"><i class="fa fa-compass" aria-hidden="true"></i> QUEST</span>
                     <span class="tut-quest-sub">ACTION REQUIRED</span>
@@ -1133,7 +1164,7 @@ onUnmounted(() => {
   max-height: calc(100vh - 120px);
 }
 
-.tut-send-btn { background: darkgoldenrod; border: none; color: #fff; font-family: 'Kelt', serif; font-size: 13px; padding: 4px 12px; border-radius: 14px; cursor: pointer; font-weight: bold; }
+.tut-send-btn { background: darkgoldenrod; border: none; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; padding: 4px 12px; border-radius: 14px; cursor: pointer; font-weight: bold; }
 
 .tut-sheet-close { display: block; background: none; border: none; color: #9a927f; font-size: 20px; cursor: pointer; padding: 0 4px; }
 .tut-sheet-close:hover { color: #f4dd94; }
