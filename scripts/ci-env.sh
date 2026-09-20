@@ -28,8 +28,10 @@ else
 fi
 echo "VITE_HOSTNAME=$VITE_HOSTNAME" >> $GITHUB_ENV
 
-# Explicitly set VITE_BASE=/ for the official production environment
-if [ "$OWNER" = "mume" ] && [ "$REPO" = "mume.github.io" ]; then
+# Explicitly set VITE_BASE=/ for the official production environment if not already set
+OWNER_LOWER=$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')
+REPO_LOWER=$(echo "$REPO" | tr '[:upper:]' '[:lower:]')
+if [ -z "$VITE_BASE" ] && [ "$OWNER_LOWER" = "mume" ] && [ "$REPO_LOWER" = "mume.github.io" ]; then
   export VITE_BASE="/"
   echo "VITE_BASE=$VITE_BASE" >> $GITHUB_ENV
 fi

@@ -26,7 +26,9 @@ jobs:
       - name: Determine Base URL Prefix
         id: base_url
         run: |
-          if [ "${{ github.event.repository.name }}" = "${{ github.repository_owner }}.github.io" ]; then
+          REPO_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          OWNER_NAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          if [ "$REPO_NAME" = "${OWNER_NAME}.github.io" ]; then
             echo "prefix=/" >> $GITHUB_OUTPUT
           else
             echo "prefix=/${{ github.event.repository.name }}/" >> $GITHUB_OUTPUT
@@ -41,6 +43,11 @@ jobs:
 
       - name: Build preview
         run: npm run build
+        env:
+          VITE_BASE: ${{ steps.base_url.outputs.prefix }}pr-${{ github.event.number }}/
+
+      - name: Verify links and asset paths
+        run: npm test
         env:
           VITE_BASE: ${{ steps.base_url.outputs.prefix }}pr-${{ github.event.number }}/
 

@@ -16,7 +16,7 @@ description: Latest developments, changes, war updates, and traffic plots for Mu
 <dt><a href="https://mume.org/news/game/" target="_self" rel="external">Game News</a></dt>
 <dd>Find out about the latest news from the game!</dd>
 
-<dt><a href="/news/web">Web News</a></dt>
+<dt><a href="./web">Web News</a></dt>
 <dd>The news from this Web-page. Note these do not really get used, usually everything important gets put up as Game News.</dd>
 
 <dt><a href="https://mume.org/plots/" target="_self" rel="external">Frequentation Plots</a></dt>
