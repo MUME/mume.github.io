@@ -180,29 +180,27 @@ const inputEl = ref<HTMLInputElement | null>(null)
 const isTouchDevice = ref(false)
 
 const promptPlaceholder = computed(() => {
-  if (isScrollOverflowActive.value && !isScrolling.value && !entry.value) {
-    return isTouchDevice.value
-      ? '-- More output -- (Tap to scroll)'
-      : '-- More output -- (Press Space, Enter, or click to scroll)'
-  }
   if (playerState.value === PlayerState.CHAPTER_COMPLETE) {
     if (isTouchDevice.value) {
       return nextChapterUrl.value
-        ? 'Chapter complete. Tap to continue'
-        : 'Tutorial complete! Tap for options'
+        ? 'Chapter complete. Tap Next Chapter to continue'
+        : 'Tutorial complete! Tap Options for options'
     } else {
       return nextChapterUrl.value
-        ? 'Chapter complete. Press Enter or click to continue'
-        : 'Tutorial complete! Press Enter or click for options'
+        ? 'Chapter complete. Press Enter or click Next Chapter'
+        : 'Tutorial complete! Press Enter or click Options'
     }
   }
   return 'Type command...'
 })
 
+const toastText = computed(() => {
+  return isTouchDevice.value
+    ? 'More output available — Tap to scroll'
+    : 'More output available — Click or press Space to scroll'
+})
+
 const promptButtonLabel = computed(() => {
-  if (isScrollOverflowActive.value && !isScrolling.value && !entry.value) {
-    return 'More ↓'
-  }
   if (playerState.value === PlayerState.CHAPTER_COMPLETE) {
     return nextChapterUrl.value ? 'Next Chapter →' : 'Options →'
   }
@@ -795,25 +793,36 @@ onUnmounted(() => {
                :class="{
                  'is-pager': isScrollOverflowActive && !isScrolling && !entry,
                  'is-complete': playerState === PlayerState.CHAPTER_COMPLETE
-               }"
-               @click.prevent="(isScrollOverflowActive && !entry) ? pageForward(true) : submit()">
-            <span class="tut-caret">&gt;</span>
-            <input ref="inputEl" v-model="entry" @keydown.enter.prevent="submit"
-                   autocomplete="off" spellcheck="false"
-                   :readonly="(isScrollOverflowActive && !isScrolling && !entry) || playerState === PlayerState.CHAPTER_COMPLETE"
-                   :inputmode="((isScrollOverflowActive && !isScrolling && !entry) || playerState === PlayerState.CHAPTER_COMPLETE) ? 'none' : 'text'"
-                   :placeholder="promptPlaceholder"
-                   aria-label="Type a command" />
-            <button type="button"
-                    class="tut-send-btn"
-                    :class="{
-                      'tut-pager-btn': isScrollOverflowActive && !isScrolling && !entry,
-                      'tut-next-ch-btn': playerState === PlayerState.CHAPTER_COMPLETE
-                    }"
-                    @click.stop="(isScrollOverflowActive && !entry) ? pageForward(true) : submit()"
-                    aria-label="Send Command">
-              {{ promptButtonLabel }}
+               }">
+            <!-- Mode 1: Paging State (Replaces input box with interactive pill button) -->
+            <button v-if="isScrollOverflowActive && !isScrolling && !entry"
+                    type="button"
+                    class="tut-full-pager-btn"
+                    @click.prevent="pageForward(true)"
+                    aria-label="Scroll to read more output">
+              <i class="fa fa-chevron-circle-down tut-toast-icon" aria-hidden="true"></i>
+              <span>{{ toastText }}</span>
             </button>
+
+            <!-- Mode 2: Normal Command Input / Chapter Completion Bar -->
+            <template v-else>
+              <span class="tut-caret">&gt;</span>
+              <input ref="inputEl" v-model="entry" @keydown.enter.prevent="submit"
+                     autocomplete="off" spellcheck="false"
+                     :readonly="playerState === PlayerState.CHAPTER_COMPLETE"
+                     :inputmode="playerState === PlayerState.CHAPTER_COMPLETE ? 'none' : 'text'"
+                     :placeholder="promptPlaceholder"
+                     aria-label="Type a command" />
+              <button type="button"
+                      class="tut-send-btn"
+                      :class="{
+                        'tut-next-ch-btn': playerState === PlayerState.CHAPTER_COMPLETE
+                      }"
+                      @click.stop="submit()"
+                      aria-label="Send Command">
+                {{ promptButtonLabel }}
+              </button>
+            </template>
           </div>
         </div>
 
@@ -1283,7 +1292,68 @@ onUnmounted(() => {
   border-radius: 8px;
 }
 
-.tut-term { display: flex; flex-direction: column; min-width: 0; }
+.tut-term { display: flex; flex-direction: column; min-width: 0; position: relative; }
+
+/* Floating Overlay Toast Pill for Output Paging */
+.tut-pager-toast {
+  position: absolute;
+  bottom: 58px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(180deg, #2a220f, #141008);
+  border: 1px solid #ffd700;
+  color: #f4dd94;
+  font-family: 'Kelt', serif;
+  font-size: 13.5px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7), 0 0 12px rgba(255, 215, 0, 0.35);
+  animation: tutPulseToast 2.2s infinite, tutStreamIn 0.25s ease-out;
+  user-select: none;
+  outline: none;
+  white-space: nowrap;
+}
+
+.tut-pager-toast:hover,
+.tut-pager-toast:focus-visible {
+  background: linear-gradient(180deg, #3a2e12, #1f180a);
+  color: #ffffff;
+  border-color: #ffffff;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.8), 0 0 16px rgba(255, 215, 0, 0.6);
+}
+
+.tut-toast-icon {
+  color: #ffd700;
+  font-size: 14px;
+  animation: tutBounceIcon 1.5s infinite ease-in-out;
+}
+
+@keyframes tutPulseToast {
+  0% { box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7), 0 0 8px rgba(255, 215, 0, 0.25); }
+  50% { box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7), 0 0 18px rgba(255, 215, 0, 0.55); }
+  100% { box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7), 0 0 8px rgba(255, 215, 0, 0.25); }
+}
+
+@keyframes tutBounceIcon {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(3px); }
+}
+
+/* Toast Fade Transition */
+.tut-toast-fade-enter-active,
+.tut-toast-fade-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.tut-toast-fade-enter-from,
+.tut-toast-fade-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 8px);
+}
 .tut-log { min-height: 440px; max-height: 520px; overflow-y: auto; padding: 12px 18px 16px; scroll-behavior: smooth; }
 .tut-eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: 11px; color: #b8860b; margin-bottom: 4px; }
 .tut-h { font-family: 'Kelt', serif; color: #e6d79a; font-size: 24px; margin: 0 0 .4em; border: 0; padding: 0; }
@@ -1300,9 +1370,38 @@ onUnmounted(() => {
 .tut-secondary-link:hover, .tut-secondary-link:focus-visible { background: darkgoldenrod; color: #3a3a3a !important; text-decoration: none !important; }
 .tut-note { color: #8f8a7d; font-size: 12.5px; margin: 4px 0 6px; }
 
-.tut-prompt { display: flex; align-items: center; gap: 8px; border-top: 1px solid #23262e; padding: 12px 18px; background: #08080a; transition: background 0.25s, border-color 0.25s; }
-.tut-prompt.is-pager { background: linear-gradient(180deg, #18150c, #0a0b0e); border-top-color: rgba(215, 166, 63, 0.5); cursor: pointer; }
-.tut-prompt.is-pager input::placeholder { color: #f4dd94; font-weight: bold; }
+.tut-prompt { display: flex; align-items: center; gap: 8px; border-top: 1px solid #23262e; padding: 10px 14px; background: #08080a; transition: background 0.25s, border-color 0.25s; }
+.tut-prompt.is-pager { background: linear-gradient(180deg, #1a160a, #0b0c0f); border-top-color: rgba(255, 215, 0, 0.6); padding: 8px 12px; }
+
+/* Full-width Pager Action Pill Button */
+.tut-full-pager-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(180deg, #2e2410, #171208);
+  border: 1px solid #ffd700;
+  color: #f4dd94;
+  font-family: 'Kelt', serif;
+  font-size: 14.5px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 215, 0, 0.25);
+  animation: tutPulseToast 2.2s infinite, tutStreamIn 0.25s ease-out;
+  user-select: none;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.tut-full-pager-btn:hover,
+.tut-full-pager-btn:focus-visible {
+  background: linear-gradient(180deg, #423214, #241a0a);
+  color: #ffffff;
+  border-color: #ffffff;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7), 0 0 16px rgba(255, 215, 0, 0.5);
+}
 
 .tut-prompt.is-complete {
   background: linear-gradient(180deg, rgba(184, 134, 11, 0.25), rgba(12, 13, 16, 0.95));
