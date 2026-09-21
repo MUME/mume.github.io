@@ -701,6 +701,8 @@ onUnmounted(() => {
             <span class="tut-caret">&gt;</span>
             <input ref="inputEl" v-model="entry" @keydown.enter.prevent="submit"
                    autocomplete="off" spellcheck="false"
+                   :readonly="isScrollOverflowActive && !isScrolling && !entry"
+                   :inputmode="isScrollOverflowActive && !isScrolling && !entry ? 'none' : 'text'"
                    :placeholder="isScrollOverflowActive && !isScrolling && !entry ? `[ MORE — Press Space/Enter or Tap ]` : (finished ? (nextChapterUrl ? 'Press Enter to continue to next chapter...' : 'Tutorial complete — press Enter for options') : (pendingChapterCompletion ? 'Press Enter to complete chapter...' : 'type here, then press Enter'))"
                    aria-label="Type a command" />
             <button type="button"

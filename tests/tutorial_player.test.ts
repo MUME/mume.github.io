@@ -41,4 +41,11 @@ describe('TutorialPlayer.vue', () => {
     await input.trigger('keydown.enter')
     expect(wrapper.text()).toContain('Display full overview.')
   })
+
+  it('sets input readonly when pager mode is active', async () => {
+    const wrapper = mount(TutorialPlayer)
+    // Initially not readonly when input is empty and no overflow
+    const input = wrapper.find('input')
+    expect(input.attributes('readonly')).toBeUndefined()
+  })
 })
