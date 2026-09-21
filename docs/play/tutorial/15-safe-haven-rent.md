@@ -1,6 +1,6 @@
 ---
-title: "Safe Haven & Inn Renting"
-description: "Locate the innkeeper in The Foaming Mug, request a storage quote, and safely rent to preserve your equipment."
+title: "Renting: Saving Your Character and their Equipment"
+description: "Rent a room at an inn to store your gear and save your character."
 teach:
   - command: "up"
     desc: "ascend to the Inn's Private Rooms"
@@ -11,6 +11,8 @@ teach:
   - command: "rent"
     desc: "safely store your gear and save your character"
 steps:
+  - story: |
+      ![Inn's Private Rooms](/assets/images/tutorial-maps/rent.jpg)
   - ask: "up"
     note: "From the Common Room of The Foaming Mug, climb `up` to the Inn's Private Rooms."
     accept:
@@ -37,11 +39,7 @@ steps:
 responses:
   up: |
     Inn's Private Rooms
-    Rows of simple wooden doors leading to the guest rooms are accessed from a long
-    corridor behind a small counter. A small brass bell rests on the counter to
-    summon the innkeeper if he is away from his post. Covering the floor is a
-    threadbare rug which, although worn, deadens the noise coming from below.
-    The innkeeper set is here, smiling at would-be customers.
+    The innkeeper is here, smiling at would-be customers.
     Exits: north, down.
     The innkeeper says 'Welcome to the largest inn in Black Hill village! I have never run out of rooms.'
 
@@ -81,8 +79,6 @@ responses:
     ![>
 ---
 
-# Chapter 14: Securing the Night at the Inn
+# Securing the Night at the Inn
 
-As twilight falls over the Black Hills, Ermin commends Fuor on a successful first expedition. Simply disconnecting in the wild causes adventurers to drop their equipment! To save your gear and character permanently, head upstairs in **The Foaming Mug**, inspect the innkeeper (`examine innkeeper`), check room rates (`offer`), and rent a private chamber (`rent`).
-
-Help Fuor secure his room by typing `up`, `examine innkeeper`, `offer`, and `rent` below!
+Simply disconnecting in the wild drops your equipment. **To save your equipment and character**, head `up` to the **Inn's Private Rooms**, `examine innkeeper`, ask the rate with `offer`, then `rent`. There are many inns around Middle-earth - look for the "R" on the map. Remember: always `rent` at the end of a session!
