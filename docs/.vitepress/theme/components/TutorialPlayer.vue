@@ -179,32 +179,23 @@ const inputEl = ref<HTMLInputElement | null>(null)
 
 const isTouchDevice = ref(false)
 
-const promptPlaceholder = computed(() => {
-  if (playerState.value === PlayerState.CHAPTER_COMPLETE) {
-    if (isTouchDevice.value) {
-      return nextChapterUrl.value
-        ? 'Chapter complete. Tap Next Chapter to continue'
-        : 'Tutorial complete! Tap Options for options'
-    } else {
-      return nextChapterUrl.value
-        ? 'Chapter complete. Press Enter or click Next Chapter'
-        : 'Tutorial complete! Press Enter or click Options'
-    }
-  }
-  return 'Type command...'
-})
-
 const toastText = computed(() => {
   return isTouchDevice.value
     ? 'More output available — Tap to scroll'
     : 'More output available — Click or press Space to scroll'
 })
 
-const promptButtonLabel = computed(() => {
-  if (playerState.value === PlayerState.CHAPTER_COMPLETE) {
-    return nextChapterUrl.value ? 'Next Chapter →' : 'Options →'
+const completionPillText = computed(() => {
+  if (nextChapterObj.value) {
+    const num = nextChapterObj.value.chapterNum
+    const title = nextChapterObj.value.title
+    return isTouchDevice.value
+      ? `Continue to Chapter ${num}: ${title}`
+      : `Continue to Chapter ${num}: ${title} (or press Enter)`
   }
-  return 'Send'
+  return isTouchDevice.value
+    ? `Tutorial Complete — What's Next?`
+    : `Tutorial Complete — What's Next? (or press Enter)`
 })
 
 // Pager state management
@@ -756,20 +747,11 @@ onUnmounted(() => {
               <div v-else-if="b.kind === 'error'" class="tut-err">{{ b.text }}</div>
 
               <template v-else-if="b.kind === 'chapter_complete'">
-                <div class="tut-complete-box">
+                <div class="tut-complete-box" @click="submit" style="cursor: pointer;" title="Click to advance">
                   <div class="tut-eyebrow">Chapter {{ b.chapterNum }} Complete!</div>
                   <h3 class="tut-h">Great work mastering {{ b.title }}</h3>
                   <p class="tut-line" v-if="b.nextUrl">Ready to continue your journey into Middle-earth?</p>
                   <p class="tut-line" v-else>You have completed all chapters in the interactive tutorial!</p>
-
-                  <div class="tut-end-actions">
-                    <button v-if="b.nextUrl && nextChapterObj" type="button" class="tut-enter" @click="navigateToUrl(b.nextUrl)">
-                      Continue to Chapter {{ nextChapterObj.chapterNum }}: {{ nextChapterObj.title }} &rarr;
-                    </button>
-                    <button v-else type="button" class="tut-enter" @click="openModal">
-                      Tutorial Complete &mdash; What's Next? &rarr;
-                    </button>
-                  </div>
                 </div>
               </template>
 
@@ -804,23 +786,28 @@ onUnmounted(() => {
               <span>{{ toastText }}</span>
             </button>
 
-            <!-- Mode 2: Normal Command Input / Chapter Completion Bar -->
+            <!-- Mode 2: Chapter Completion State (Replaces input box with full-width completion pill button) -->
+            <button v-else-if="playerState === PlayerState.CHAPTER_COMPLETE"
+                    type="button"
+                    class="tut-full-complete-btn"
+                    @click.stop="submit()"
+                    aria-label="Advance to next chapter">
+              <span>{{ completionPillText }}</span>
+              <i class="fa fa-arrow-right tut-complete-icon" aria-hidden="true"></i>
+            </button>
+
+            <!-- Mode 3: Normal Command Input Bar -->
             <template v-else>
               <span class="tut-caret">&gt;</span>
               <input ref="inputEl" v-model="entry" @keydown.enter.prevent="submit"
                      autocomplete="off" spellcheck="false"
-                     :readonly="playerState === PlayerState.CHAPTER_COMPLETE"
-                     :inputmode="playerState === PlayerState.CHAPTER_COMPLETE ? 'none' : 'text'"
-                     :placeholder="promptPlaceholder"
+                     placeholder="Type command..."
                      aria-label="Type a command" />
               <button type="button"
                       class="tut-send-btn"
-                      :class="{
-                        'tut-next-ch-btn': playerState === PlayerState.CHAPTER_COMPLETE
-                      }"
                       @click.stop="submit()"
                       aria-label="Send Command">
-                {{ promptButtonLabel }}
+                Send
               </button>
             </template>
           </div>
@@ -1404,25 +1391,50 @@ onUnmounted(() => {
 }
 
 .tut-prompt.is-complete {
-  background: linear-gradient(180deg, rgba(184, 134, 11, 0.25), rgba(12, 13, 16, 0.95));
-  border-top: 1px solid rgba(255, 215, 0, 0.6);
-  cursor: pointer;
-}
-.tut-prompt.is-complete input::placeholder {
-  color: #ffd700;
-  font-weight: bold;
+  background: linear-gradient(180deg, #1c170a, #0b0c0f);
+  border-top-color: rgba(255, 215, 0, 0.6);
+  padding: 8px 12px;
 }
 
-.tut-send-btn.tut-next-ch-btn {
-  background: gold;
-  color: #111;
-  box-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
-  animation: tutPulseHint 2s infinite;
-  white-space: nowrap;
+/* Full-width Chapter Completion Action Pill Button */
+.tut-full-complete-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(180deg, #b8860b, #785807);
+  border: 1px solid #ffd700;
+  color: #ffffff;
+  font-family: 'Kelt', serif;
+  font-size: 14.5px;
+  font-weight: bold;
+  padding: 9px 18px;
+  border-radius: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(184, 134, 11, 0.5), 0 0 12px rgba(255, 215, 0, 0.4);
+  animation: tutPulseHint 2s infinite, tutStreamIn 0.25s ease-out;
+  user-select: none;
+  outline: none;
+  transition: all 0.2s ease;
 }
-.tut-send-btn.tut-next-ch-btn:hover {
-  background: #ffffff;
-  color: #000;
+
+.tut-full-complete-btn:hover,
+.tut-full-complete-btn:focus-visible {
+  background: linear-gradient(180deg, #d49b13, #8c670a);
+  color: #ffffff;
+  border-color: #ffffff;
+  box-shadow: 0 6px 22px rgba(184, 134, 11, 0.7), 0 0 18px rgba(255, 215, 0, 0.6);
+  transform: translateY(-1px);
+}
+
+.tut-complete-icon {
+  font-size: 14px;
+  transition: transform 0.2s ease;
+}
+
+.tut-full-complete-btn:hover .tut-complete-icon {
+  transform: translateX(3px);
 }
 .tut-caret { color: #d8b04a; font-family: 'DejaVu Sans Mono', Menlo, Consolas, monospace; }
 .tut-prompt input { flex: 1; background: transparent; border: none; outline: none; color: #eaeaea; font-family: 'DejaVu Sans Mono', Menlo, Consolas, monospace; font-size: 14px; }
