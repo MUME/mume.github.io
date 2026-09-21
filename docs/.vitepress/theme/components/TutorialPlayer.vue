@@ -185,6 +185,10 @@ function updatePagerState() {
   isScrollOverflowActive.value = isOverflowActive(container)
 }
 
+function handleMediaLoad() {
+  updatePagerState()
+}
+
 function handleScroll() {
   isScrolling.value = true
   if (scrollEndTimer) clearTimeout(scrollEndTimer)
@@ -606,7 +610,7 @@ onUnmounted(() => {
 
       <div class="tut-body" :class="{ 'has-sheet': isSheetOpen }">
         <div class="tut-term">
-          <div class="tut-log" ref="logEl" aria-live="polite" aria-atomic="false" @scroll="handleScroll" @load.capture="updatePagerState" @click="handleLogClick">
+          <div class="tut-log" ref="logEl" aria-live="polite" aria-atomic="false" @scroll="handleScroll" @load.capture="handleMediaLoad" @click="handleLogClick">
             <div v-for="(b, i) in log" :key="i" class="tut-block">
               <template v-if="b.kind === 'lesson'">
                 <!-- Chapter Intro Card -->
@@ -1067,6 +1071,7 @@ onUnmounted(() => {
 .tut-img-container {
   display: block;
   min-height: 140px;
+  contain-intrinsic-size: 100% 180px;
   background: rgba(15, 16, 20, 0.6);
   border-radius: 6px;
   margin: 8px 0;
@@ -1074,9 +1079,14 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
+.tut-log img,
+.tut-md-content img,
 .tut-img-embed {
   max-width: 100%;
   max-height: 220px;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
   border-radius: 6px;
   border: 1px solid rgba(215, 166, 63, 0.35);
   display: block;
