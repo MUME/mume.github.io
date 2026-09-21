@@ -258,6 +258,18 @@ function scrollLogToLatestBlock() {
     setTimeout(() => {
       const container = logEl.value
       if (!container) return
+
+      // For initial chapter intro load, pin scroll to top so intro is read from top to bottom
+      if (subStepIdx.value === 0 && log.value.length === 1) {
+        if (typeof container.scrollTo === 'function') {
+          container.scrollTo({ top: 0, behavior: 'smooth' })
+        } else {
+          container.scrollTop = 0
+        }
+        setTimeout(updatePagerState, 200)
+        return
+      }
+
       const blocks = container.querySelectorAll('.tut-block')
       if (blocks.length > 0) {
         const lastBlock = blocks[blocks.length - 1] as HTMLElement
