@@ -1,13 +1,20 @@
-<script setup>
+<script setup lang="ts">
 /*
   Interactive new-player tutorial component driven dynamically by chapter Markdown files.
-  Streamlined terminal output: immediate MUD output execution without extra "Press Enter to carry on" pauses.
-  Clear end-of-tutorial handover options to Play Hub, Browser Client, or Newcomers Guide.
-  Features visual toggle pill indicator for Commands, unified Narrative vs Quest Action Card UX, and inline markdown formatting for commands in quest descriptions.
+  Streamlined terminal output with explicit Player State Machine transitions:
+  - AWAITING_COMMAND: User input active for required quest command.
+  - PAGING_OUTPUT: Terminal content overflows; paging down transitions to pending action.
+  - PLAYING_BEAT: Auto-streaming narrative story beat before next step.
+  - CHAPTER_COMPLETE: Final step completed, displays handover options card.
 */
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useData, useRoute, useRouter, withBase } from 'vitepress'
-import { data as allChapters } from '../../../play/tutorial/chapters.data.js'
+import { data as rawChapters } from '../../../play/tutorial/chapters.data.js'
+import { formatInlineMarkdown } from '../utils/markdown'
+import { normalizeChapterPath, findChapterByPath, Chapter, PlayerState } from '../utils/tutorial'
+import { isOverflowActive } from '../utils/pager'
+
+const allChapters = rawChapters as Chapter[]
 
 const PLAY_HUB_URL = '/play/'
 const BROWSER_PLAY_URL = '/play/browser'
@@ -17,42 +24,13 @@ const router = useRouter()
 const route = useRoute()
 const { site, frontmatter } = useData()
 
-function formatInlineMarkdown(text) {
-  if (!text) return ''
-  let safe = text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-
-  safe = safe.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
-    const cleanAlt = alt.replace(/"/g, '&quot;')
-    let cleanSrc = src.trim().replace(/"/g, '&quot;')
-
-    // Only rewrite relative public/assets paths, preserving http://, https://, and data: URLs
-    if (!/^(?:https?:\/\/|data:)/i.test(cleanSrc)) {
-      if (cleanSrc.includes('assets/')) {
-        cleanSrc = '/assets/' + cleanSrc.split('assets/')[1]
-      }
-
-      if (cleanSrc.startsWith('/')) {
-        cleanSrc = withBase(cleanSrc)
-      }
-    }
-
-    return `<img src="${cleanSrc}" alt="${cleanAlt}" class="tut-img-embed" onload="this.dispatchEvent(new Event('load', { bubbles: true }))" />`
-  })
-
-  safe = safe.replace(/`([^`]+)`/g, '<code class="tut-cmd-inline">$1</code>')
-  return safe.replace(/\n/g, '<br>')
+function formatMarkdown(text: string | null | undefined): string {
+  return formatInlineMarkdown(text, withBase)
 }
 
 const currentChapterObj = computed(() => {
-  let currentPath = route.path.replace(/\.html$/, '').replace(/\/$/, '')
-  const base = site.value?.base || '/'
-  if (base !== '/' && currentPath.startsWith(base.replace(/\/$/, ''))) {
-    currentPath = '/' + currentPath.slice(base.replace(/\/$/, '').length).replace(/^\//, '')
-  }
-  return allChapters.find(c => c.url === currentPath || currentPath.endsWith(c.filename)) || allChapters[0]
+  const norm = normalizeChapterPath(route.path, site.value?.base || '/')
+  return findChapterByPath(allChapters, norm) || allChapters[0]
 })
 
 const chapterNum = computed(() => currentChapterObj.value ? currentChapterObj.value.chapterNum : 1)
@@ -110,13 +88,14 @@ const currentSubStep = computed(() => stepsList.value[subStepIdx.value] || null)
 // Driven 100% dynamically from chapter frontmatter
 const mumeResponses = computed(() => frontmatter.value?.responses || currentChapterObj.value?.responses || {})
 
-const log = ref([])
-const finished = ref(false)
+const log = ref<any[]>([])
+const playerState = ref<PlayerState>(PlayerState.AWAITING_COMMAND)
+const pendingNextAction = ref<(() => void) | null>(null)
 const entry = ref('')
 const isSheetOpen = ref(false)
 const isExpanded = ref(false)
 const isModalOpen = ref(false)
-const activeModalImage = ref(null)
+const activeModalImage = ref<{ src: string; alt: string } | null>(null)
 
 function openModal() {
   isModalOpen.value = true
@@ -126,7 +105,7 @@ function closeModal() {
   isModalOpen.value = false
 }
 
-function openImageModal(src, alt = '') {
+function openImageModal(src: string, alt = '') {
   activeModalImage.value = { src, alt }
 }
 
@@ -134,10 +113,11 @@ function closeImageModal() {
   activeModalImage.value = null
 }
 
-function handleLogClick(e) {
-  const target = e.target
+function handleLogClick(e: MouseEvent) {
+  const target = e.target as HTMLElement
   if (target && target.tagName === 'IMG' && target.classList.contains('tut-img-embed')) {
-    openImageModal(target.src, target.alt)
+    const img = target as HTMLImageElement
+    openImageModal(img.src, img.alt)
   }
 }
 
@@ -150,7 +130,6 @@ function toggleExpand() {
     if (document.documentElement.requestFullscreen) {
       document.documentElement.requestFullscreen().catch(() => {})
     }
-    // Auto-expand Command Sheet in Fullscreen on Desktop
     if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
       isSheetOpen.value = true
     }
@@ -171,10 +150,14 @@ function handleFullscreenChange() {
   }
 }
 
-function handleKeydown(e) {
+function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
     if (activeModalImage.value) {
       closeImageModal()
+      return
+    }
+    if (isModalOpen.value) {
+      closeModal()
       return
     }
     if (isExpanded.value) {
@@ -185,53 +168,69 @@ function handleKeydown(e) {
     }
   }
 
-  // Intercept Space or PageDown for paging if output overflow is active and input is empty or unfocused
+  // Handle Enter or Space during Chapter Complete state
+  if (playerState.value === PlayerState.CHAPTER_COMPLETE) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      submit()
+      return
+    }
+  }
+
+  // Intercept Enter, Space, or PageDown for paging if output overflow is active
   if (isScrollOverflowActive.value && !isScrolling.value) {
-    const isInputFocused = document.activeElement === inputEl.value
-    if ((e.key === 'PageDown' || e.key === ' ') && (!isInputFocused || !entry.value.trim())) {
+    const isInputFocused = typeof document !== 'undefined' && document.activeElement === inputEl.value
+    if ((e.key === 'PageDown' || e.key === ' ' || e.key === 'Enter') && (!isInputFocused || !entry.value.trim())) {
       e.preventDefault()
       pageForward()
+      return
     }
   }
 }
 
-const logEl = ref(null)
-const inputEl = ref(null)
+const logEl = ref<HTMLElement | null>(null)
+const inputEl = ref<HTMLInputElement | null>(null)
+
+const isTouchDevice = ref(false)
+
+const toastText = computed(() => {
+  return isTouchDevice.value
+    ? 'More output available — Tap to scroll'
+    : 'More output available — Click or press Space to scroll'
+})
+
+const completionPillText = computed(() => {
+  if (nextChapterObj.value) {
+    const num = nextChapterObj.value.chapterNum
+    const title = nextChapterObj.value.title
+    return isTouchDevice.value
+      ? `Continue to Chapter ${num}: ${title}`
+      : `Continue to Chapter ${num}: ${title} (or press Enter)`
+  }
+  return isTouchDevice.value
+    ? `Tutorial Complete — What's Next?`
+    : `Tutorial Complete — What's Next? (or press Enter)`
+})
 
 // Pager state management
 const isScrollOverflowActive = ref(false)
-const currentPageNum = ref(1)
-const totalPagesNum = ref(1)
 const isScrolling = ref(false)
-let scrollEndTimer = null
+let scrollEndTimer: any = null
 
 function updatePagerState() {
   const container = logEl.value
-  if (!container) {
-    isScrollOverflowActive.value = false
-    currentPageNum.value = 1
-    totalPagesNum.value = 1
-    return
+  isScrollOverflowActive.value = isOverflowActive(container)
+
+  // If overflow is no longer active and a pending transition action exists, execute transition
+  if (!isScrollOverflowActive.value && pendingNextAction.value) {
+    const action = pendingNextAction.value
+    pendingNextAction.value = null
+    action()
   }
+}
 
-  const scrollHeight = container.scrollHeight
-  const clientHeight = container.clientHeight
-  const scrollTop = container.scrollTop
-
-  // Determine if there is significant scrollable content below viewport
-  const scrollableDistance = scrollHeight - clientHeight
-  const remainingScroll = scrollableDistance - scrollTop
-
-  if (scrollableDistance > 40 && remainingScroll > 35) {
-    isScrollOverflowActive.value = true
-    const pageSize = Math.max(1, clientHeight - 30)
-    totalPagesNum.value = Math.max(1, Math.ceil(scrollHeight / pageSize))
-    currentPageNum.value = Math.min(totalPagesNum.value, Math.max(1, Math.floor(scrollTop / pageSize) + 1))
-  } else {
-    isScrollOverflowActive.value = false
-    currentPageNum.value = 1
-    totalPagesNum.value = 1
-  }
+function handleMediaLoad() {
+  updatePagerState()
 }
 
 function handleScroll() {
@@ -240,27 +239,28 @@ function handleScroll() {
   scrollEndTimer = setTimeout(() => {
     isScrolling.value = false
     updatePagerState()
-  }, 150)
+  }, 200)
 }
 
-function pageForward() {
+function pageForward(preventFocus = false) {
   const container = logEl.value
   if (!container) return
-  const pageStep = container.clientHeight - 40
+  const pageStep = Math.max(100, container.clientHeight - 40)
   container.scrollBy({ top: pageStep, behavior: 'smooth' })
-  setTimeout(updatePagerState, 300)
+  if (!preventFocus && playerState.value === PlayerState.AWAITING_COMMAND) {
+    focusInput()
+  }
 }
 
 function flushPager() {
   const container = logEl.value
   if (!container) return
   container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
-  setTimeout(updatePagerState, 300)
 }
 
 const stepLabel = computed(() => `Chapter ${chapterNum.value} of ${totalChapters.value}`)
 
-let autoAdvanceTimer = null
+let autoAdvanceTimer: any = null
 function clearAutoAdvanceTimer() {
   if (autoAdvanceTimer) {
     clearTimeout(autoAdvanceTimer)
@@ -276,7 +276,7 @@ function focusInput() {
   }
 }
 
-function navigateToUrl(url) {
+function navigateToUrl(url: string | null) {
   if (!url) return
   clearAutoAdvanceTimer()
   const targetUrl = withBase(url)
@@ -289,40 +289,58 @@ function navigateToUrl(url) {
   }
 }
 
-function scrollLog() {
+/**
+ * Scroll log to align with the top of the newest block if it overflows,
+ * ensuring large outputs (like info or long lesson text) are readable from the start.
+ */
+function scrollLogToLatestBlock() {
   if (typeof window !== 'undefined') {
     setTimeout(() => {
       const container = logEl.value
       if (!container) return
+
+      // For initial chapter intro load, pin scroll to top so intro is read from top to bottom
+      if (subStepIdx.value === 0 && log.value.length === 1) {
+        if (typeof container.scrollTo === 'function') {
+          container.scrollTo({ top: 0, behavior: 'smooth' })
+        } else {
+          container.scrollTop = 0
+        }
+        setTimeout(updatePagerState, 200)
+        return
+      }
+
       const blocks = container.querySelectorAll('.tut-block')
       if (blocks.length > 0) {
-        const lastBlock = blocks[blocks.length - 1]
+        const lastBlock = blocks[blocks.length - 1] as HTMLElement
         const containerRect = container.getBoundingClientRect()
         const blockRect = lastBlock.getBoundingClientRect()
 
-        // If block is taller than the view, bring the start of the block into view
-        if (blockRect.height > containerRect.height - 40) {
+        // If block is taller than or overflows the viewport, align scroll to top of that block
+        if (blockRect.height > containerRect.height - 40 && typeof lastBlock.scrollIntoView === 'function') {
           lastBlock.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        } else {
+        } else if (typeof container.scrollTo === 'function') {
           container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
         }
-      } else {
+      } else if (typeof container.scrollTo === 'function') {
         container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
       }
+      setTimeout(updatePagerState, 200)
     }, 60)
   }
 }
 
-function goToStep(targetIdx) {
+function goToStep(targetIdx: number, allowAutoAdvance: boolean = true) {
   clearAutoAdvanceTimer()
+  pendingNextAction.value = null
   if (targetIdx < 0) targetIdx = 0
   if (targetIdx >= stepsList.value.length) targetIdx = Math.max(0, stepsList.value.length - 1)
 
   subStepIdx.value = targetIdx
-  finished.value = false
+  playerState.value = PlayerState.AWAITING_COMMAND
   entry.value = ''
 
-  const newLog = []
+  const newLog: any[] = []
   const firstSub = stepsList.value[0] || null
 
   newLog.push({
@@ -373,7 +391,7 @@ function goToStep(targetIdx) {
   }
 
   log.value = newLog
-  scrollLog()
+  scrollLogToLatestBlock()
 
   const curSub = stepsList.value[targetIdx] || null
   if (curSub && !curSub.ask && (curSub.text || curSub.response)) {
@@ -381,13 +399,34 @@ function goToStep(targetIdx) {
       kind: 'story',
       body: curSub.text || curSub.response
     })
-    scrollLog()
-    autoAdvanceTimer = setTimeout(() => {
-      advanceSubStep()
-    }, 250)
+    scrollLogToLatestBlock()
+    if (allowAutoAdvance) {
+      checkAndScheduleAutoAdvance()
+    } else {
+      playerState.value = PlayerState.AWAITING_COMMAND
+      focusInput()
+    }
   } else {
+    playerState.value = PlayerState.AWAITING_COMMAND
     focusInput()
   }
+}
+
+function checkAndScheduleAutoAdvance() {
+  clearAutoAdvanceTimer()
+  setTimeout(() => {
+    updatePagerState()
+    if (isScrollOverflowActive.value) {
+      // Content overflows terminal viewport: transition state to PAGING_OUTPUT
+      playerState.value = PlayerState.PAGING_OUTPUT
+      pendingNextAction.value = () => advanceSubStep()
+      return
+    }
+    playerState.value = PlayerState.PLAYING_BEAT
+    autoAdvanceTimer = setTimeout(() => {
+      advanceSubStep()
+    }, 300)
+  }, 120)
 }
 
 function renderStepLog() {
@@ -395,14 +434,15 @@ function renderStepLog() {
 }
 
 function completeChapter() {
-  finished.value = true
+  playerState.value = PlayerState.CHAPTER_COMPLETE
+  pendingNextAction.value = null
   log.value.push({
     kind: 'chapter_complete',
     chapterNum: chapterNum.value,
     title: chapterTitle.value,
     nextUrl: nextChapterUrl.value
   })
-  scrollLog()
+  scrollLogToLatestBlock()
 }
 
 function advanceNext() {
@@ -415,11 +455,14 @@ function advanceNext() {
 
 function advanceSubStep() {
   clearAutoAdvanceTimer()
+  pendingNextAction.value = null
+
   if (subStepIdx.value < stepsList.value.length - 1) {
     subStepIdx.value++
     const nextSub = stepsList.value[subStepIdx.value] || null
 
     if (nextSub && nextSub.ask) {
+      playerState.value = PlayerState.AWAITING_COMMAND
       log.value.push({
         kind: 'prompt_next',
         stepIndex: subStepIdx.value,
@@ -427,26 +470,56 @@ function advanceSubStep() {
         note: nextSub.note || null,
         ask: nextSub.ask
       })
-      scrollLog()
+      scrollLogToLatestBlock()
       focusInput()
     } else if (nextSub && (nextSub.text || nextSub.response)) {
       log.value.push({
         kind: 'story',
         body: nextSub.text || nextSub.response
       })
-      scrollLog()
-      autoAdvanceTimer = setTimeout(() => {
-        advanceSubStep()
-      }, 250)
+
+      // Look ahead: if the step after this story beat is a quest command, render its prompt immediately
+      const followingSub = stepsList.value[subStepIdx.value + 1] || null
+      if (followingSub && followingSub.ask) {
+        subStepIdx.value++
+        playerState.value = PlayerState.AWAITING_COMMAND
+        log.value.push({
+          kind: 'prompt_next',
+          stepIndex: subStepIdx.value,
+          totalSteps: stepsList.value.length,
+          note: followingSub.note || null,
+          ask: followingSub.ask
+        })
+        scrollLogToLatestBlock()
+        focusInput()
+      } else {
+        scrollLogToLatestBlock()
+        checkAndScheduleAutoAdvance()
+      }
     }
   } else {
-    completeChapter()
+    // Reached final step in chapter
+    setTimeout(() => {
+      updatePagerState()
+      if (isScrollOverflowActive.value) {
+        playerState.value = PlayerState.PAGING_OUTPUT
+        pendingNextAction.value = () => completeChapter()
+      } else {
+        completeChapter()
+      }
+    }, 150)
   }
 }
 
 function prevSubStep() {
+  clearAutoAdvanceTimer()
   if (subStepIdx.value > 0) {
-    goToStep(subStepIdx.value - 1)
+    let prevIdx = subStepIdx.value - 1
+    // Skip backward over passive story beats so back button lands on the previous interactive quest step
+    while (prevIdx > 0 && !stepsList.value[prevIdx]?.ask) {
+      prevIdx--
+    }
+    goToStep(prevIdx, false)
   } else if (prevChapterUrl.value) {
     navigateToUrl(prevChapterUrl.value)
   }
@@ -456,16 +529,27 @@ function submit() {
   const raw = entry.value.trim()
   const cmd = raw.toLowerCase()
 
-  // Handle Pager Mode when input is empty and overflow is active
-  if (isScrollOverflowActive.value && !raw && !finished.value) {
+  // If in Paging state or input empty while overflow is active, advance page
+  if (isScrollOverflowActive.value && !raw) {
     pageForward()
+    return
+  }
+
+  // If on a story beat step (no required `ask` command), advance beat state
+  const curStep = currentSubStep.value
+  if (curStep && !curStep.ask) {
+    entry.value = ''
+    if (isScrollOverflowActive.value) {
+      flushPager()
+    }
+    advanceSubStep()
     focusInput()
     return
   }
 
-  entry.value = ''
-
-  if (finished.value) {
+  // If chapter is complete or pending completion at end of scroll
+  if (playerState.value === PlayerState.CHAPTER_COMPLETE) {
+    entry.value = ''
     if (nextChapterUrl.value) {
       navigateToUrl(nextChapterUrl.value)
     } else {
@@ -474,6 +558,8 @@ function submit() {
     focusInput()
     return
   }
+
+  entry.value = ''
 
   if (isScrollOverflowActive.value) {
     flushPager()
@@ -484,12 +570,10 @@ function submit() {
   if (cmd === 'skip') { advanceNext(); focusInput(); return }
   if (cmd === 'tutorial') { navigateToUrl(allChapters[0]?.url || '/play/tutorial/1-orientation'); focusInput(); return }
 
-  const curStep = currentSubStep.value
-
   if (!curStep) {
     if (cmd && mumeResponses.value[cmd]) {
       log.value.push({ kind: 'example', body: mumeResponses.value[cmd] })
-      scrollLog()
+      scrollLogToLatestBlock()
     } else {
       advanceNext()
     }
@@ -498,13 +582,13 @@ function submit() {
   }
 
   if (!cmd) {
-    log.value.push({ kind: 'error', text: curStep.hint || (`Type: ${curStep.ask}`) })
-    scrollLog()
+    log.value.push({ kind: 'error', text: curStep.hint || (`Type: ${curStep.ask || 'command'}`) })
+    scrollLogToLatestBlock()
     focusInput()
     return
   }
 
-  const accept = curStep.accept || [curStep.ask]
+  const accept = curStep.accept || (curStep.ask ? [curStep.ask] : [])
   const ok = accept.some(a => a.toLowerCase() === cmd)
 
   if (ok) {
@@ -513,14 +597,15 @@ function submit() {
     if (body) {
       log.value.push({ kind: 'example', body })
     }
+    scrollLogToLatestBlock()
     advanceSubStep()
   } else if (mumeResponses.value[cmd]) {
     log.value.push({ kind: 'example', body: mumeResponses.value[cmd] })
-    log.value.push({ kind: 'error', text: 'Good try! To proceed in this step, ' + (curStep.hint || (`try: ${curStep.ask}`)) })
-    scrollLog()
+    log.value.push({ kind: 'error', text: 'Good try! To advance to the next step, ' + (curStep.hint || (`try typing: ${curStep.ask || 'the required command'}`)) })
+    scrollLogToLatestBlock()
   } else {
-    log.value.push({ kind: 'error', text: 'MUME does not know that one here. ' + (curStep.hint || (`Try: ${curStep.ask}`)) })
-    scrollLog()
+    log.value.push({ kind: 'error', text: 'That command isn\'t recognized for this step of the tutorial. ' + (curStep.hint || (`Try typing: ${curStep.ask || 'the required command'}`)) })
+    scrollLogToLatestBlock()
   }
   focusInput()
 }
@@ -529,12 +614,12 @@ watch(() => route.path, () => {
   renderStepLog()
 }, { immediate: true })
 
-let logResizeObserver = null
+let logResizeObserver: any = null
 
 onMounted(() => {
   if (typeof window !== 'undefined') {
+    isTouchDevice.value = 'ontouchstart' in window || navigator.maxTouchPoints > 0
     renderStepLog()
-    // Auto-open Command Sheet on desktop viewports by default
     if (window.innerWidth >= 1024) {
       isSheetOpen.value = true
     }
@@ -542,11 +627,14 @@ onMounted(() => {
     window.addEventListener('keydown', handleKeydown)
     document.addEventListener('fullscreenchange', handleFullscreenChange)
 
-    if (logEl.value && typeof ResizeObserver !== 'undefined') {
-      logResizeObserver = new ResizeObserver(() => {
-        updatePagerState()
-      })
-      logResizeObserver.observe(logEl.value)
+    if (logEl.value) {
+      logEl.value.addEventListener('scrollend', updatePagerState)
+      if (typeof ResizeObserver !== 'undefined') {
+        logResizeObserver = new ResizeObserver(() => {
+          updatePagerState()
+        })
+        logResizeObserver.observe(logEl.value)
+      }
     }
   }
 })
@@ -555,6 +643,9 @@ onUnmounted(() => {
   if (typeof window !== 'undefined') {
     window.removeEventListener('keydown', handleKeydown)
     document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    if (logEl.value) {
+      logEl.value.removeEventListener('scrollend', updatePagerState)
+    }
     if (logResizeObserver) {
       logResizeObserver.disconnect()
       logResizeObserver = null
@@ -618,7 +709,7 @@ onUnmounted(() => {
 
       <div class="tut-body" :class="{ 'has-sheet': isSheetOpen }">
         <div class="tut-term">
-          <div class="tut-log" ref="logEl" aria-live="polite" aria-atomic="false" @scroll="handleScroll" @load.capture="updatePagerState" @click="handleLogClick">
+          <div class="tut-log" ref="logEl" aria-live="polite" aria-atomic="false" @scroll="handleScroll" @load.capture="handleMediaLoad" @click="handleLogClick">
             <div v-for="(b, i) in log" :key="i" class="tut-block">
               <template v-if="b.kind === 'lesson'">
                 <!-- Chapter Intro Card -->
@@ -638,7 +729,7 @@ onUnmounted(() => {
                     <span class="tut-quest-badge"><i class="fa fa-compass" aria-hidden="true"></i> QUEST</span>
                     <span class="tut-quest-sub">ACTION REQUIRED</span>
                   </div>
-                  <div v-if="b.note" class="tut-quest-desc" v-html="formatInlineMarkdown(b.note)"></div>
+                  <div v-if="b.note" class="tut-quest-desc" v-html="formatMarkdown(b.note)"></div>
                   <div class="tut-quest-target">
                     Type command: <span class="tut-cmd-chip">{{ b.ask }}</span>
                   </div>
@@ -652,7 +743,7 @@ onUnmounted(() => {
                     <span class="tut-quest-badge"><i class="fa fa-compass" aria-hidden="true"></i> QUEST</span>
                     <span class="tut-quest-sub">ACTION REQUIRED</span>
                   </div>
-                  <div v-if="b.note" class="tut-quest-desc" v-html="formatInlineMarkdown(b.note)"></div>
+                  <div v-if="b.note" class="tut-quest-desc" v-html="formatMarkdown(b.note)"></div>
                   <div class="tut-quest-target">
                     Type command: <span class="tut-cmd-chip">{{ b.ask }}</span>
                   </div>
@@ -666,26 +757,17 @@ onUnmounted(() => {
               <!-- Unified Story Beat Card -->
               <div v-else-if="b.kind === 'story'" class="tut-story-beat-card">
                 <i class="fa fa-quote-left tut-beat-icon" aria-hidden="true"></i>
-                <div class="tut-beat-body" v-html="formatInlineMarkdown(b.body)"></div>
+                <div class="tut-beat-body" v-html="formatMarkdown(b.body)"></div>
               </div>
 
               <div v-else-if="b.kind === 'error'" class="tut-err">{{ b.text }}</div>
 
               <template v-else-if="b.kind === 'chapter_complete'">
-                <div class="tut-complete-box">
+                <div class="tut-complete-box" @click="submit" style="cursor: pointer;" title="Click to advance">
                   <div class="tut-eyebrow">Chapter {{ b.chapterNum }} Complete!</div>
                   <h3 class="tut-h">Great work mastering {{ b.title }}</h3>
                   <p class="tut-line" v-if="b.nextUrl">Ready to continue your journey into Middle-earth?</p>
                   <p class="tut-line" v-else>You have completed all chapters in the interactive tutorial!</p>
-
-                  <div class="tut-end-actions">
-                    <button v-if="b.nextUrl && nextChapterObj" type="button" class="tut-enter" @click="navigateToUrl(b.nextUrl)">
-                      Continue to Chapter {{ nextChapterObj.chapterNum }}: {{ nextChapterObj.title }} &rarr;
-                    </button>
-                    <button v-else type="button" class="tut-enter" @click="openModal">
-                      Tutorial Complete &mdash; What's Next? &rarr;
-                    </button>
-                  </div>
                 </div>
               </template>
 
@@ -705,19 +787,49 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div class="tut-prompt" :class="{ 'is-pager': isScrollOverflowActive && !isScrolling }" @click="isScrollOverflowActive && !entry ? pageForward() : focusInput()">
-            <span class="tut-caret">&gt;</span>
-            <input ref="inputEl" v-model="entry" @keydown.enter.prevent="submit"
-                   autocomplete="off" spellcheck="false"
-                   :placeholder="isScrollOverflowActive && !isScrolling && !entry ? `[ MORE — Page ${currentPageNum} of ${totalPagesNum} — Press Space/Enter or Tap ]` : (finished ? (nextChapterUrl ? 'Press Enter to continue to next chapter...' : 'Tutorial complete — press Enter for options') : 'type here, then press Enter')"
-                   aria-label="Type a command" />
-            <button type="button"
-                    class="tut-send-btn"
-                    :class="{ 'tut-pager-btn': isScrollOverflowActive && !isScrolling && !entry }"
-                    @click.stop="submit"
-                    aria-label="Send Command">
-              {{ (isScrollOverflowActive && !isScrolling && !entry) ? 'More ↓' : (finished ? (nextChapterUrl ? 'Next' : 'Options') : 'Send') }}
+          <div class="tut-prompt"
+               :class="{
+                 'is-pager': isScrollOverflowActive && !isScrolling && !entry,
+                 'is-complete': playerState === PlayerState.CHAPTER_COMPLETE
+               }">
+            <!-- Mode 1: Paging State (Replaces input box with interactive pill button) -->
+            <button v-if="isScrollOverflowActive && !isScrolling && !entry"
+                    type="button"
+                    class="tut-full-pager-btn"
+                    @click.prevent="pageForward(true)"
+                    @keydown.enter.prevent="pageForward(true)"
+                    @keydown.space.prevent="pageForward(true)"
+                    aria-label="Scroll to read more output">
+              <i class="fa fa-chevron-circle-down tut-toast-icon" aria-hidden="true"></i>
+              <span>{{ toastText }}</span>
             </button>
+
+            <!-- Mode 2: Chapter Completion State (Replaces input box with full-width completion pill button) -->
+            <button v-else-if="playerState === PlayerState.CHAPTER_COMPLETE"
+                    type="button"
+                    class="tut-full-complete-btn"
+                    @click.stop="submit()"
+                    @keydown.enter.prevent="submit()"
+                    @keydown.space.prevent="submit()"
+                    aria-label="Advance to next chapter">
+              <span>{{ completionPillText }}</span>
+              <i class="fa fa-arrow-right tut-complete-icon" aria-hidden="true"></i>
+            </button>
+
+            <!-- Mode 3: Normal Command Input Bar -->
+            <template v-else>
+              <span class="tut-caret">&gt;</span>
+              <input ref="inputEl" v-model="entry" @keydown.enter.prevent="submit"
+                     autocomplete="off" spellcheck="false"
+                     placeholder="Type command..."
+                     aria-label="Type a command" />
+              <button type="button"
+                      class="tut-send-btn"
+                      @click.stop="submit()"
+                      aria-label="Send Command">
+                Send
+              </button>
+            </template>
           </div>
         </div>
 
@@ -732,7 +844,7 @@ onUnmounted(() => {
             <div v-if="currentSubStep && currentSubStep.ask" class="tut-sheet-quest-spotlight">
               <div class="tut-spotlight-badge"><i class="fa fa-compass" aria-hidden="true"></i> ACTIVE QUEST</div>
               <div class="tut-spotlight-cmd">Target Command: <code>{{ currentSubStep.ask }}</code></div>
-              <div v-if="currentSubStep.note" class="tut-spotlight-note" v-html="formatInlineMarkdown(currentSubStep.note)"></div>
+              <div v-if="currentSubStep.note" class="tut-spotlight-note" v-html="formatMarkdown(currentSubStep.note)"></div>
             </div>
 
             <p v-if="!teachList.length" class="tut-empty">No special commands listed for this chapter.</p>
@@ -1039,6 +1151,16 @@ onUnmounted(() => {
   font-size: 0.92em;
 }
 
+.tut-link {
+  color: #f4dd94;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.2s;
+}
+.tut-link:hover {
+  color: #ffffff;
+}
+
 /* Inline Story Beat Card */
 .tut-story-beat-card {
   display: flex;
@@ -1065,12 +1187,28 @@ onUnmounted(() => {
   flex: 1;
 }
 
+/* Image Lazy Loading & Placeholder Container */
+.tut-img-container {
+  display: block;
+  min-height: 140px;
+  contain-intrinsic-size: 100% 180px;
+  background: rgba(15, 16, 20, 0.6);
+  border-radius: 6px;
+  margin: 8px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.tut-log img,
+.tut-md-content img,
 .tut-img-embed {
   max-width: 100%;
   max-height: 220px;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
   border-radius: 6px;
   border: 1px solid rgba(215, 166, 63, 0.35);
-  margin: 8px 0;
   display: block;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   cursor: zoom-in;
@@ -1161,7 +1299,68 @@ onUnmounted(() => {
   border-radius: 8px;
 }
 
-.tut-term { display: flex; flex-direction: column; min-width: 0; }
+.tut-term { display: flex; flex-direction: column; min-width: 0; position: relative; }
+
+/* Floating Overlay Toast Pill for Output Paging */
+.tut-pager-toast {
+  position: absolute;
+  bottom: 58px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(180deg, #2a220f, #141008);
+  border: 1px solid #ffd700;
+  color: #f4dd94;
+  font-family: 'Kelt', serif;
+  font-size: 13.5px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7), 0 0 12px rgba(255, 215, 0, 0.35);
+  animation: tutPulseToast 2.2s infinite, tutStreamIn 0.25s ease-out;
+  user-select: none;
+  outline: none;
+  white-space: nowrap;
+}
+
+.tut-pager-toast:hover,
+.tut-pager-toast:focus-visible {
+  background: linear-gradient(180deg, #3a2e12, #1f180a);
+  color: #ffffff;
+  border-color: #ffffff;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.8), 0 0 16px rgba(255, 215, 0, 0.6);
+}
+
+.tut-toast-icon {
+  color: #ffd700;
+  font-size: 14px;
+  animation: tutBounceIcon 1.5s infinite ease-in-out;
+}
+
+@keyframes tutPulseToast {
+  0% { box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7), 0 0 8px rgba(255, 215, 0, 0.25); }
+  50% { box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7), 0 0 18px rgba(255, 215, 0, 0.55); }
+  100% { box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7), 0 0 8px rgba(255, 215, 0, 0.25); }
+}
+
+@keyframes tutBounceIcon {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(3px); }
+}
+
+/* Toast Fade Transition */
+.tut-toast-fade-enter-active,
+.tut-toast-fade-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.tut-toast-fade-enter-from,
+.tut-toast-fade-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 8px);
+}
 .tut-log { min-height: 440px; max-height: 520px; overflow-y: auto; padding: 12px 18px 16px; scroll-behavior: smooth; }
 .tut-eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: 11px; color: #b8860b; margin-bottom: 4px; }
 .tut-h { font-family: 'Kelt', serif; color: #e6d79a; font-size: 24px; margin: 0 0 .4em; border: 0; padding: 0; }
@@ -1178,9 +1377,85 @@ onUnmounted(() => {
 .tut-secondary-link:hover, .tut-secondary-link:focus-visible { background: darkgoldenrod; color: #3a3a3a !important; text-decoration: none !important; }
 .tut-note { color: #8f8a7d; font-size: 12.5px; margin: 4px 0 6px; }
 
-.tut-prompt { display: flex; align-items: center; gap: 8px; border-top: 1px solid #23262e; padding: 12px 18px; background: #08080a; transition: background 0.25s, border-color 0.25s; }
-.tut-prompt.is-pager { background: linear-gradient(180deg, #18150c, #0a0b0e); border-top-color: rgba(215, 166, 63, 0.5); cursor: pointer; }
-.tut-prompt.is-pager input::placeholder { color: #f4dd94; font-weight: bold; }
+.tut-prompt { display: flex; align-items: center; gap: 8px; border-top: 1px solid #23262e; padding: 10px 14px; background: #08080a; transition: background 0.25s, border-color 0.25s; }
+.tut-prompt.is-pager { background: linear-gradient(180deg, #1a160a, #0b0c0f); border-top-color: rgba(255, 215, 0, 0.6); padding: 8px 12px; }
+
+/* Full-width Pager Action Pill Button */
+.tut-full-pager-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(180deg, #2e2410, #171208);
+  border: 1px solid #ffd700;
+  color: #f4dd94;
+  font-family: 'Kelt', serif;
+  font-size: 14.5px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 215, 0, 0.25);
+  animation: tutPulseToast 2.2s infinite, tutStreamIn 0.25s ease-out;
+  user-select: none;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.tut-full-pager-btn:hover,
+.tut-full-pager-btn:focus-visible {
+  background: linear-gradient(180deg, #423214, #241a0a);
+  color: #ffffff;
+  border-color: #ffffff;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7), 0 0 16px rgba(255, 215, 0, 0.5);
+}
+
+.tut-prompt.is-complete {
+  background: linear-gradient(180deg, #1c170a, #0b0c0f);
+  border-top-color: rgba(255, 215, 0, 0.6);
+  padding: 8px 12px;
+}
+
+/* Full-width Chapter Completion Action Pill Button */
+.tut-full-complete-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(180deg, #b8860b, #785807);
+  border: 1px solid #ffd700;
+  color: #ffffff;
+  font-family: 'Kelt', serif;
+  font-size: 14.5px;
+  font-weight: bold;
+  padding: 9px 18px;
+  border-radius: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(184, 134, 11, 0.5), 0 0 12px rgba(255, 215, 0, 0.4);
+  animation: tutPulseHint 2s infinite, tutStreamIn 0.25s ease-out;
+  user-select: none;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.tut-full-complete-btn:hover,
+.tut-full-complete-btn:focus-visible {
+  background: linear-gradient(180deg, #d49b13, #8c670a);
+  color: #ffffff;
+  border-color: #ffffff;
+  box-shadow: 0 6px 22px rgba(184, 134, 11, 0.7), 0 0 18px rgba(255, 215, 0, 0.6);
+  transform: translateY(-1px);
+}
+
+.tut-complete-icon {
+  font-size: 14px;
+  transition: transform 0.2s ease;
+}
+
+.tut-full-complete-btn:hover .tut-complete-icon {
+  transform: translateX(3px);
+}
 .tut-caret { color: #d8b04a; font-family: 'DejaVu Sans Mono', Menlo, Consolas, monospace; }
 .tut-prompt input { flex: 1; background: transparent; border: none; outline: none; color: #eaeaea; font-family: 'DejaVu Sans Mono', Menlo, Consolas, monospace; font-size: 14px; }
 .tut-prompt input::placeholder { color: #5f5f5f; }
