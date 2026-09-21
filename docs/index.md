@@ -30,7 +30,7 @@ You can trust us to stick to you through thick and thin&mdash;to the bitter end.
   <div class="readytoexplore">Ready to explore Middle-earth?</div>
   <div class="playnow-buttons">
     <a href="./play/"><i class="fa fa-gamepad" aria-hidden="true"></i> Play Now</a>
-    <a href="./play/tutorial/1-orientation" class="btn-secondary-playnow"><i class="fa fa-compass" aria-hidden="true"></i> Interactive Tutorial</a>
+    <a href="./play/tutorial/1-welcome" class="btn-secondary-playnow"><i class="fa fa-compass" aria-hidden="true"></i> Interactive Tutorial</a>
   </div>
 </div>
 

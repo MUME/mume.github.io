@@ -1,5 +1,5 @@
 ---
-title: "Equipment & Wielding"
+title: "Equipment & Weapons"
 description: "Inspect carried items, equip body armor, wield primary weapons, and fasten shields."
 teach:
   - command: "equipment"
@@ -47,9 +47,6 @@ steps:
 responses:
   equipment: |
     You are using:
-    <wielded>            a backsword (flawless)
-    <worn as shield>     a small wooden shield (flawless)
-    <worn on body>       a soft leather jerkin (flawless)
     <worn on legs>       a pair of plain trousers (flawless)
     <worn on feet>       a pair of rigid leather boots (flawless)
     <worn across back>   a shortbow
@@ -62,9 +59,6 @@ responses:
     *+->
   eq: |
     You are using:
-    <wielded>            a backsword (flawless)
-    <worn as shield>     a small wooden shield (flawless)
-    <worn on body>       a soft leather jerkin (flawless)
     <worn on legs>       a pair of plain trousers (flawless)
     <worn on feet>       a pair of rigid leather boots (flawless)
     <worn across back>   a shortbow
@@ -77,6 +71,9 @@ responses:
     *+->
   inventory: |
     You are carrying:
+    a backsword (flawless)
+    a soft leather jerkin (flawless)
+    a small wooden shield (flawless)
     a loaf of bread
     a large biscuit
     a small piece of meat
@@ -87,6 +84,9 @@ responses:
     *+->
   inv: |
     You are carrying:
+    a backsword (flawless)
+    a soft leather jerkin (flawless)
+    a small wooden shield (flawless)
     a loaf of bread
     a large biscuit
     a small piece of meat
@@ -97,6 +97,9 @@ responses:
     *+->
   i: |
     You are carrying:
+    a backsword (flawless)
+    a soft leather jerkin (flawless)
+    a small wooden shield (flawless)
     a loaf of bread
     a large biscuit
     a small piece of meat
@@ -127,8 +130,8 @@ responses:
     *+->
 ---
 
-# Chapter 6: Arming for the Road
+# Arming for the Road
 
-Carrying armor and weapons in a pack offers no protection—Fuor must don his jerkin (`wear jerkin`), grip his backsword (`wield backsword`), and fasten his wooden shield (`wear shield`).
+Carrying armor and weapons in a pack offers no protection-Fuor must don his jerkin (`wear jerkin`), hold his backsword (`wield backsword`), and fasten his wooden shield (`wear shield`).
 
 Arm Fuor for the road ahead by inspecting his `equipment` and `inventory`, then donning his gear below!
