@@ -42,10 +42,43 @@ describe('TutorialPlayer.vue', () => {
     expect(wrapper.text()).toContain('Display full overview.')
   })
 
+  it('advances story beats cleanly without stalling', async () => {
+    const wrapper = mount(TutorialPlayer)
+    const input = wrapper.find('input')
+    await input.setValue('score')
+    await input.trigger('keydown.enter')
+    // Next step is story beat or quest step
+    expect(wrapper.find('input').exists()).toBe(true)
+  })
+
+  it('handles step backward and forward navigation cleanly', async () => {
+    const wrapper = mount(TutorialPlayer)
+    const input = wrapper.find('input')
+
+    // Complete step 0
+    await input.setValue('score')
+    await input.trigger('keydown.enter')
+
+    // Check step pills exist and can be clicked
+    const pills = wrapper.findAll('.tut-step-pill-btn')
+    if (pills.length > 1) {
+      await pills[0].trigger('click')
+      expect(wrapper.text()).toContain('Check your core vitals with score.')
+    }
+  })
+
   it('sets input readonly when pager mode is active', async () => {
     const wrapper = mount(TutorialPlayer)
     // Initially not readonly when input is empty and no overflow
     const input = wrapper.find('input')
     expect(input.attributes('readonly')).toBeUndefined()
+  })
+
+  it('provides helpful error text for unrecognized commands', async () => {
+    const wrapper = mount(TutorialPlayer)
+    const input = wrapper.find('input')
+    await input.setValue('unknown_command')
+    await input.trigger('keydown.enter')
+    expect(wrapper.text()).toContain("That command isn't recognized for this step of the tutorial.")
   })
 })

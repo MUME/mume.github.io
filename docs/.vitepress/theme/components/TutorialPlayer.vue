@@ -1,9 +1,11 @@
 <script setup lang="ts">
 /*
   Interactive new-player tutorial component driven dynamically by chapter Markdown files.
-  Streamlined terminal output: immediate MUD output execution without extra pauses.
-  Enhanced pagination & auto-scroll: aligns scroll view to top of new content blocks/lesson text.
-  Defers chapter completion on final step output so large MUD responses can be read/paged through.
+  Streamlined terminal output with explicit Player State Machine transitions:
+  - AWAITING_COMMAND: User input active for required quest command.
+  - PAGING_OUTPUT: Terminal content overflows; paging down transitions to pending action.
+  - PLAYING_BEAT: Auto-streaming narrative story beat before next step.
+  - CHAPTER_COMPLETE: Final step completed, displays handover options card.
 */
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useData, useRoute, useRouter, withBase } from 'vitepress'
@@ -17,6 +19,8 @@ const allChapters = rawChapters as Chapter[]
 const PLAY_HUB_URL = '/play/'
 const BROWSER_PLAY_URL = '/play/browser'
 const NEWCOMERS_URL = '/resources/newcomers'
+
+type PlayerState = 'AWAITING_COMMAND' | 'PAGING_OUTPUT' | 'PLAYING_BEAT' | 'CHAPTER_COMPLETE'
 
 const router = useRouter()
 const route = useRoute()
@@ -87,8 +91,8 @@ const currentSubStep = computed(() => stepsList.value[subStepIdx.value] || null)
 const mumeResponses = computed(() => frontmatter.value?.responses || currentChapterObj.value?.responses || {})
 
 const log = ref<any[]>([])
-const finished = ref(false)
-const pendingChapterCompletion = ref(false)
+const playerState = ref<PlayerState>('AWAITING_COMMAND')
+const pendingNextAction = ref<(() => void) | null>(null)
 const entry = ref('')
 const isSheetOpen = ref(false)
 const isExpanded = ref(false)
@@ -183,6 +187,13 @@ let scrollEndTimer: any = null
 function updatePagerState() {
   const container = logEl.value
   isScrollOverflowActive.value = isOverflowActive(container)
+
+  // If overflow is no longer active and a pending transition action exists, execute transition
+  if (!isScrollOverflowActive.value && pendingNextAction.value) {
+    const action = pendingNextAction.value
+    pendingNextAction.value = null
+    action()
+  }
 }
 
 function handleMediaLoad() {
@@ -205,7 +216,7 @@ function pageForward(preventFocus = false) {
   container.scrollBy({ top: pageStep, behavior: 'smooth' })
   setTimeout(() => {
     updatePagerState()
-    if (!preventFocus) {
+    if (!preventFocus && playerState.value === 'AWAITING_COMMAND') {
       focusInput()
     }
   }, 300)
@@ -292,12 +303,12 @@ function scrollLogToLatestBlock() {
 
 function goToStep(targetIdx: number) {
   clearAutoAdvanceTimer()
+  pendingNextAction.value = null
   if (targetIdx < 0) targetIdx = 0
   if (targetIdx >= stepsList.value.length) targetIdx = Math.max(0, stepsList.value.length - 1)
 
   subStepIdx.value = targetIdx
-  finished.value = false
-  pendingChapterCompletion.value = false
+  playerState.value = 'AWAITING_COMMAND'
   entry.value = ''
 
   const newLog: any[] = []
@@ -368,17 +379,19 @@ function goToStep(targetIdx: number) {
 
 function checkAndScheduleAutoAdvance() {
   clearAutoAdvanceTimer()
-  // Give DOM a tick to calculate scrollHeight
   setTimeout(() => {
     updatePagerState()
     if (isScrollOverflowActive.value) {
-      // Content overflows terminal viewport: pause auto-advance so user can read/page
+      // Content overflows terminal viewport: transition state to PAGING_OUTPUT
+      playerState.value = 'PAGING_OUTPUT'
+      pendingNextAction.value = () => advanceSubStep()
       return
     }
+    playerState.value = 'PLAYING_BEAT'
     autoAdvanceTimer = setTimeout(() => {
       advanceSubStep()
     }, 300)
-  }, 100)
+  }, 120)
 }
 
 function renderStepLog() {
@@ -386,8 +399,8 @@ function renderStepLog() {
 }
 
 function completeChapter() {
-  finished.value = true
-  pendingChapterCompletion.value = false
+  playerState.value = 'CHAPTER_COMPLETE'
+  pendingNextAction.value = null
   log.value.push({
     kind: 'chapter_complete',
     chapterNum: chapterNum.value,
@@ -407,11 +420,14 @@ function advanceNext() {
 
 function advanceSubStep() {
   clearAutoAdvanceTimer()
+  pendingNextAction.value = null
+
   if (subStepIdx.value < stepsList.value.length - 1) {
     subStepIdx.value++
     const nextSub = stepsList.value[subStepIdx.value] || null
 
     if (nextSub && nextSub.ask) {
+      playerState.value = 'AWAITING_COMMAND'
       log.value.push({
         kind: 'prompt_next',
         stepIndex: subStepIdx.value,
@@ -426,15 +442,34 @@ function advanceSubStep() {
         kind: 'story',
         body: nextSub.text || nextSub.response
       })
-      scrollLogToLatestBlock()
-      checkAndScheduleAutoAdvance()
+
+      // Look ahead: if the step after this story beat is a quest command, render its prompt immediately
+      const followingSub = stepsList.value[subStepIdx.value + 1] || null
+      if (followingSub && followingSub.ask) {
+        subStepIdx.value++
+        playerState.value = 'AWAITING_COMMAND'
+        log.value.push({
+          kind: 'prompt_next',
+          stepIndex: subStepIdx.value,
+          totalSteps: stepsList.value.length,
+          note: followingSub.note || null,
+          ask: followingSub.ask
+        })
+        scrollLogToLatestBlock()
+        focusInput()
+      } else {
+        scrollLogToLatestBlock()
+        checkAndScheduleAutoAdvance()
+      }
     }
   } else {
-    // Reached final step: set pendingChapterCompletion so response outputs in full before completion box
-    pendingChapterCompletion.value = true
+    // Reached final step in chapter
     setTimeout(() => {
       updatePagerState()
-      if (!isScrollOverflowActive.value) {
+      if (isScrollOverflowActive.value) {
+        playerState.value = 'PAGING_OUTPUT'
+        pendingNextAction.value = () => completeChapter()
+      } else {
         completeChapter()
       }
     }, 150)
@@ -453,23 +488,27 @@ function submit() {
   const raw = entry.value.trim()
   const cmd = raw.toLowerCase()
 
-  // Handle Pager Mode when input is empty and overflow is active
+  // If in Paging state or input empty while overflow is active, advance page
   if (isScrollOverflowActive.value && !raw) {
     pageForward()
     return
   }
 
-  // If pending chapter completion and user hits Enter at end of scroll
-  if (pendingChapterCompletion.value && !finished.value && !isScrollOverflowActive.value) {
-    completeChapter()
+  // If on a story beat step (no required `ask` command), advance beat state
+  const curStep = currentSubStep.value
+  if (curStep && !curStep.ask) {
     entry.value = ''
+    if (isScrollOverflowActive.value) {
+      flushPager()
+    }
+    advanceSubStep()
     focusInput()
     return
   }
 
-  entry.value = ''
-
-  if (finished.value) {
+  // If chapter is complete or pending completion at end of scroll
+  if (playerState.value === 'CHAPTER_COMPLETE') {
+    entry.value = ''
     if (nextChapterUrl.value) {
       navigateToUrl(nextChapterUrl.value)
     } else {
@@ -479,6 +518,8 @@ function submit() {
     return
   }
 
+  entry.value = ''
+
   if (isScrollOverflowActive.value) {
     flushPager()
   }
@@ -487,8 +528,6 @@ function submit() {
 
   if (cmd === 'skip') { advanceNext(); focusInput(); return }
   if (cmd === 'tutorial') { navigateToUrl(allChapters[0]?.url || '/play/tutorial/1-orientation'); focusInput(); return }
-
-  const curStep = currentSubStep.value
 
   if (!curStep) {
     if (cmd && mumeResponses.value[cmd]) {
@@ -521,10 +560,10 @@ function submit() {
     advanceSubStep()
   } else if (mumeResponses.value[cmd]) {
     log.value.push({ kind: 'example', body: mumeResponses.value[cmd] })
-    log.value.push({ kind: 'error', text: 'Good try! To proceed in this step, ' + (curStep.hint || (`try: ${curStep.ask || 'the required command'}`)) })
+    log.value.push({ kind: 'error', text: 'Good try! To advance to the next step, ' + (curStep.hint || (`try typing: ${curStep.ask || 'the required command'}`)) })
     scrollLogToLatestBlock()
   } else {
-    log.value.push({ kind: 'error', text: 'MUME does not know that one here. ' + (curStep.hint || (`Try: ${curStep.ask || 'the required command'}`)) })
+    log.value.push({ kind: 'error', text: 'That command isn\'t recognized for this step of the tutorial. ' + (curStep.hint || (`Try typing: ${curStep.ask || 'the required command'}`)) })
     scrollLogToLatestBlock()
   }
   focusInput()
@@ -715,14 +754,14 @@ onUnmounted(() => {
                    autocomplete="off" spellcheck="false"
                    :readonly="isScrollOverflowActive && !isScrolling && !entry"
                    :inputmode="isScrollOverflowActive && !isScrolling && !entry ? 'none' : 'text'"
-                   :placeholder="isScrollOverflowActive && !isScrolling && !entry ? `[ MORE — Press Space/Enter or Tap ]` : (finished ? (nextChapterUrl ? 'Press Enter to continue to next chapter...' : 'Tutorial complete — press Enter for options') : (pendingChapterCompletion ? 'Press Enter to complete chapter...' : 'type here, then press Enter'))"
+                   :placeholder="isScrollOverflowActive && !isScrolling && !entry ? `[ MORE — Press Space/Enter or Tap ]` : (playerState === 'CHAPTER_COMPLETE' ? (nextChapterUrl ? 'Press Enter to continue to next chapter...' : 'Tutorial complete — press Enter for options') : 'type here, then press Enter')"
                    aria-label="Type a command" />
             <button type="button"
                     class="tut-send-btn"
                     :class="{ 'tut-pager-btn': isScrollOverflowActive && !isScrolling && !entry }"
                     @click.stop="isScrollOverflowActive && !entry ? pageForward(true) : submit()"
                     aria-label="Send Command">
-              {{ (isScrollOverflowActive && !isScrolling && !entry) ? 'More ↓' : (finished ? (nextChapterUrl ? 'Next' : 'Options') : (pendingChapterCompletion ? 'Finish' : 'Send')) }}
+              {{ (isScrollOverflowActive && !isScrolling && !entry) ? 'More ↓' : (playerState === 'CHAPTER_COMPLETE' ? (nextChapterUrl ? 'Next' : 'Options') : 'Send') }}
             </button>
           </div>
         </div>
