@@ -748,20 +748,28 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div class="tut-prompt" :class="{ 'is-pager': isScrollOverflowActive && !isScrolling }" @click.prevent="isScrollOverflowActive && !entry ? pageForward(true) : focusInput()">
+          <div class="tut-prompt"
+               :class="{
+                 'is-pager': isScrollOverflowActive && !isScrolling,
+                 'is-complete': playerState === 'CHAPTER_COMPLETE'
+               }"
+               @click.prevent="(isScrollOverflowActive && !entry) ? pageForward(true) : submit()">
             <span class="tut-caret">&gt;</span>
             <input ref="inputEl" v-model="entry" @keydown.enter.prevent="submit"
                    autocomplete="off" spellcheck="false"
-                   :readonly="isScrollOverflowActive && !isScrolling && !entry"
-                   :inputmode="isScrollOverflowActive && !isScrolling && !entry ? 'none' : 'text'"
-                   :placeholder="isScrollOverflowActive && !isScrolling && !entry ? `[ MORE — Press Space/Enter or Tap ]` : (playerState === 'CHAPTER_COMPLETE' ? (nextChapterUrl ? 'Press Enter to continue to next chapter...' : 'Tutorial complete — press Enter for options') : 'type here, then press Enter')"
+                   :readonly="(isScrollOverflowActive && !isScrolling && !entry) || playerState === 'CHAPTER_COMPLETE'"
+                   :inputmode="((isScrollOverflowActive && !isScrolling && !entry) || playerState === 'CHAPTER_COMPLETE') ? 'none' : 'text'"
+                   :placeholder="isScrollOverflowActive && !isScrolling && !entry ? `[ MORE — Press Space/Enter or Tap ]` : (playerState === 'CHAPTER_COMPLETE' ? (nextChapterUrl ? '[ CHAPTER COMPLETE — Press Enter or Tap for Next Chapter → ]' : '[ TUTORIAL COMPLETE — Press Enter or Tap for Options → ]') : 'type here, then press Enter')"
                    aria-label="Type a command" />
             <button type="button"
                     class="tut-send-btn"
-                    :class="{ 'tut-pager-btn': isScrollOverflowActive && !isScrolling && !entry }"
-                    @click.stop="isScrollOverflowActive && !entry ? pageForward(true) : submit()"
+                    :class="{
+                      'tut-pager-btn': isScrollOverflowActive && !isScrolling && !entry,
+                      'tut-next-ch-btn': playerState === 'CHAPTER_COMPLETE'
+                    }"
+                    @click.stop="(isScrollOverflowActive && !entry) ? pageForward(true) : submit()"
                     aria-label="Send Command">
-              {{ (isScrollOverflowActive && !isScrolling && !entry) ? 'More ↓' : (playerState === 'CHAPTER_COMPLETE' ? (nextChapterUrl ? 'Next' : 'Options') : 'Send') }}
+              {{ (isScrollOverflowActive && !isScrolling && !entry) ? 'More ↓' : (playerState === 'CHAPTER_COMPLETE' ? (nextChapterUrl ? 'Next Chapter →' : 'Options →') : 'Send') }}
             </button>
           </div>
         </div>
@@ -1252,6 +1260,28 @@ onUnmounted(() => {
 .tut-prompt { display: flex; align-items: center; gap: 8px; border-top: 1px solid #23262e; padding: 12px 18px; background: #08080a; transition: background 0.25s, border-color 0.25s; }
 .tut-prompt.is-pager { background: linear-gradient(180deg, #18150c, #0a0b0e); border-top-color: rgba(215, 166, 63, 0.5); cursor: pointer; }
 .tut-prompt.is-pager input::placeholder { color: #f4dd94; font-weight: bold; }
+
+.tut-prompt.is-complete {
+  background: linear-gradient(180deg, rgba(184, 134, 11, 0.25), rgba(12, 13, 16, 0.95));
+  border-top: 1px solid rgba(255, 215, 0, 0.6);
+  cursor: pointer;
+}
+.tut-prompt.is-complete input::placeholder {
+  color: #ffd700;
+  font-weight: bold;
+}
+
+.tut-send-btn.tut-next-ch-btn {
+  background: gold;
+  color: #111;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
+  animation: tutPulseHint 2s infinite;
+  white-space: nowrap;
+}
+.tut-send-btn.tut-next-ch-btn:hover {
+  background: #ffffff;
+  color: #000;
+}
 .tut-caret { color: #d8b04a; font-family: 'DejaVu Sans Mono', Menlo, Consolas, monospace; }
 .tut-prompt input { flex: 1; background: transparent; border: none; outline: none; color: #eaeaea; font-family: 'DejaVu Sans Mono', Menlo, Consolas, monospace; font-size: 14px; }
 .tut-prompt input::placeholder { color: #5f5f5f; }
