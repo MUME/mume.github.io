@@ -156,6 +156,10 @@ function handleKeydown(e: KeyboardEvent) {
       closeImageModal()
       return
     }
+    if (isModalOpen.value) {
+      closeModal()
+      return
+    }
     if (isExpanded.value) {
       if (!document.fullscreenElement) {
         toggleExpand()
@@ -164,12 +168,22 @@ function handleKeydown(e: KeyboardEvent) {
     }
   }
 
-  // Intercept Space or PageDown for paging if output overflow is active and input is empty or unfocused
+  // Handle Enter or Space during Chapter Complete state
+  if (playerState.value === PlayerState.CHAPTER_COMPLETE) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      submit()
+      return
+    }
+  }
+
+  // Intercept Enter, Space, or PageDown for paging if output overflow is active
   if (isScrollOverflowActive.value && !isScrolling.value) {
     const isInputFocused = typeof document !== 'undefined' && document.activeElement === inputEl.value
-    if ((e.key === 'PageDown' || e.key === ' ') && (!isInputFocused || !entry.value.trim())) {
+    if ((e.key === 'PageDown' || e.key === ' ' || e.key === 'Enter') && (!isInputFocused || !entry.value.trim())) {
       e.preventDefault()
       pageForward()
+      return
     }
   }
 }
@@ -783,6 +797,8 @@ onUnmounted(() => {
                     type="button"
                     class="tut-full-pager-btn"
                     @click.prevent="pageForward(true)"
+                    @keydown.enter.prevent="pageForward(true)"
+                    @keydown.space.prevent="pageForward(true)"
                     aria-label="Scroll to read more output">
               <i class="fa fa-chevron-circle-down tut-toast-icon" aria-hidden="true"></i>
               <span>{{ toastText }}</span>
@@ -793,6 +809,8 @@ onUnmounted(() => {
                     type="button"
                     class="tut-full-complete-btn"
                     @click.stop="submit()"
+                    @keydown.enter.prevent="submit()"
+                    @keydown.space.prevent="submit()"
                     aria-label="Advance to next chapter">
               <span>{{ completionPillText }}</span>
               <i class="fa fa-arrow-right tut-complete-icon" aria-hidden="true"></i>

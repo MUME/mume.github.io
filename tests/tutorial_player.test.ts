@@ -88,4 +88,25 @@ describe('TutorialPlayer.vue', () => {
     await input.trigger('keydown.enter')
     expect(wrapper.text()).toContain("That command isn't recognized for this step of the tutorial.")
   })
+
+  it('triggers submit on Enter during Chapter Complete state', async () => {
+    const wrapper = mount(TutorialPlayer)
+    const input = wrapper.find('input')
+    await input.setValue('score')
+    await input.trigger('keydown.enter')
+    await input.setValue('info')
+    await input.trigger('keydown.enter')
+
+    // Wait for final step chapter completion timeout
+    await new Promise(resolve => setTimeout(resolve, 250))
+    await wrapper.vm.$nextTick()
+
+    // Expect chapter complete pill button
+    const completeBtn = wrapper.find('.tut-full-complete-btn')
+    expect(completeBtn.exists()).toBe(true)
+
+    // Window keydown Enter event should trigger completion action
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }))
+    await wrapper.vm.$nextTick()
+  })
 })
