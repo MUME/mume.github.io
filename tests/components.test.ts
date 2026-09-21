@@ -89,9 +89,8 @@ describe('MumeCommandGuide.vue', () => {
     expect(wrapper.find('.command-table').exists()).toBe(true)
     const filterTabs = wrapper.findAll('.filter-tab')
     const gearTab = filterTabs.find(b => b.text().includes('Gear & Inventory'))
-    if (gearTab) {
-      await gearTab.trigger('click')
-      expect(wrapper.text()).toContain('equipment')
-    }
+    expect(gearTab).toBeDefined()
+    await gearTab!.trigger('click')
+    expect(wrapper.text()).toContain('equipment')
   })
 })

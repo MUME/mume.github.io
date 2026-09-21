@@ -225,7 +225,7 @@ function handleScroll() {
   scrollEndTimer = setTimeout(() => {
     isScrolling.value = false
     updatePagerState()
-  }, 150)
+  }, 200)
 }
 
 function pageForward(preventFocus = false) {
@@ -233,19 +233,15 @@ function pageForward(preventFocus = false) {
   if (!container) return
   const pageStep = Math.max(100, container.clientHeight - 40)
   container.scrollBy({ top: pageStep, behavior: 'smooth' })
-  setTimeout(() => {
-    updatePagerState()
-    if (!preventFocus && playerState.value === PlayerState.AWAITING_COMMAND) {
-      focusInput()
-    }
-  }, 300)
+  if (!preventFocus && playerState.value === PlayerState.AWAITING_COMMAND) {
+    focusInput()
+  }
 }
 
 function flushPager() {
   const container = logEl.value
   if (!container) return
   container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
-  setTimeout(updatePagerState, 300)
 }
 
 const stepLabel = computed(() => `Chapter ${chapterNum.value} of ${totalChapters.value}`)
@@ -617,11 +613,14 @@ onMounted(() => {
     window.addEventListener('keydown', handleKeydown)
     document.addEventListener('fullscreenchange', handleFullscreenChange)
 
-    if (logEl.value && typeof ResizeObserver !== 'undefined') {
-      logResizeObserver = new ResizeObserver(() => {
-        updatePagerState()
-      })
-      logResizeObserver.observe(logEl.value)
+    if (logEl.value) {
+      logEl.value.addEventListener('scrollend', updatePagerState)
+      if (typeof ResizeObserver !== 'undefined') {
+        logResizeObserver = new ResizeObserver(() => {
+          updatePagerState()
+        })
+        logResizeObserver.observe(logEl.value)
+      }
     }
   }
 })
@@ -630,6 +629,9 @@ onUnmounted(() => {
   if (typeof window !== 'undefined') {
     window.removeEventListener('keydown', handleKeydown)
     document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    if (logEl.value) {
+      logEl.value.removeEventListener('scrollend', updatePagerState)
+    }
     if (logResizeObserver) {
       logResizeObserver.disconnect()
       logResizeObserver = null

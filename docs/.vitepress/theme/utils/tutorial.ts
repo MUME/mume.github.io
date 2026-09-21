@@ -27,8 +27,9 @@ export function normalizeChapterPath(rawPath: string | undefined, basePrefix: st
   if (!rawPath) return '/'
   let currentPath = rawPath.replace(/\.html$/, '').replace(/\/$/, '')
   const base = basePrefix || '/'
-  if (base !== '/' && currentPath.startsWith(base.replace(/\/$/, ''))) {
-    currentPath = '/' + currentPath.slice(base.replace(/\/$/, '').length).replace(/^\//, '')
+  const basePath = base.replace(/\/$/, '')
+  if (base !== '/' && basePath && (currentPath === basePath || currentPath.startsWith(basePath + '/'))) {
+    currentPath = '/' + currentPath.slice(basePath.length).replace(/^\//, '')
   }
   return currentPath || '/'
 }

@@ -45,12 +45,30 @@ export function formatInlineMarkdown(text: string | null | undefined, withBaseFn
   // Links: [text](url)
   safe = safe.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, linkText, url) => {
     const cleanText = linkText
-    let cleanUrl = url.trim()
-    if (!/^(?:https?:\/\/|mailto:)/i.test(cleanUrl) && cleanUrl.startsWith('/') && typeof withBaseFn === 'function') {
-      cleanUrl = withBaseFn(cleanUrl)
+    const trimmed = url.trim()
+
+    // Validate safe schemes: http, https, mailto, relative paths, or hash anchors
+    const isHttp = /^https?:\/\//i.test(trimmed)
+    const isMailto = /^mailto:/i.test(trimmed)
+    const isRelativeOrHash = /^(?:\/|\.\.|\.|\#)/.test(trimmed)
+
+    if (!isHttp && !isMailto && !isRelativeOrHash) {
+      return cleanText
     }
-    const isExternal = /^(?:https?:\/\/)/i.test(cleanUrl)
-    return `<a href="${cleanUrl}" ${isExternal ? 'target="_blank" rel="noopener noreferrer"' : ''} class="tut-link">${cleanText}</a>`
+
+    let finalUrl = trimmed
+    if (finalUrl.startsWith('/') && typeof withBaseFn === 'function') {
+      finalUrl = withBaseFn(finalUrl)
+    }
+
+    // Escape URL for HTML attribute insertion
+    const escapedUrl = finalUrl
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+
+    return `<a href="${escapedUrl}" ${isHttp ? 'target="_blank" rel="noopener noreferrer"' : ''} class="tut-link">${cleanText}</a>`
   })
 
   // Bold: **text** or __text__
