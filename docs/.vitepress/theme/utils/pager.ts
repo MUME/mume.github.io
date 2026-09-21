@@ -1,5 +1,6 @@
 /**
  * Helper function to determine pager overflow state for scrollable containers.
+ * Uses sub-pixel tolerance to handle high-DPI displays and browser zoom.
  */
 
 export function isOverflowActive(
@@ -13,7 +14,8 @@ export function isOverflowActive(
   const scrollTop = container.scrollTop
 
   const scrollableDistance = scrollHeight - clientHeight
-  const remainingScroll = scrollableDistance - scrollTop
+  // Use Math.ceil to protect against sub-pixel fractional scrolling discrepancies
+  const remainingScroll = scrollableDistance - Math.ceil(scrollTop)
 
   return scrollableDistance > scrollThreshold && remainingScroll > remainingThreshold
 }
