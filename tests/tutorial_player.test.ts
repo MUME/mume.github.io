@@ -74,11 +74,18 @@ describe('TutorialPlayer.vue', () => {
     expect(backBtn.exists()).toBe(true)
   })
 
-  it('sets input readonly when pager mode is active', async () => {
+  it('keeps input element mounted and accessible during quest steps', async () => {
     const wrapper = mount(TutorialPlayer)
-    // Initially not readonly when input is empty and no overflow
     const input = wrapper.find('input')
-    expect(input.attributes('readonly')).toBeUndefined()
+    expect(input.exists()).toBe(true)
+
+    // Submit first command
+    await input.setValue('score')
+    await input.trigger('keydown.enter')
+
+    // Verify input remains mounted and accessible for subsequent commands (e.g. info or exits)
+    const inputAfter = wrapper.find('input')
+    expect(inputAfter.exists()).toBe(true)
   })
 
   it('provides helpful error text for unrecognized commands', async () => {

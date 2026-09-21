@@ -789,23 +789,10 @@ onUnmounted(() => {
 
           <div class="tut-prompt"
                :class="{
-                 'is-pager': isScrollOverflowActive && !isScrolling && !entry,
                  'is-complete': playerState === PlayerState.CHAPTER_COMPLETE
                }">
-            <!-- Mode 1: Paging State (Replaces input box with interactive pill button) -->
-            <button v-if="isScrollOverflowActive && !isScrolling && !entry"
-                    type="button"
-                    class="tut-full-pager-btn"
-                    @click.prevent="pageForward(true)"
-                    @keydown.enter.prevent="pageForward(true)"
-                    @keydown.space.prevent="pageForward(true)"
-                    aria-label="Scroll to read more output">
-              <i class="fa fa-chevron-circle-down tut-toast-icon" aria-hidden="true"></i>
-              <span>{{ toastText }}</span>
-            </button>
-
-            <!-- Mode 2: Chapter Completion State (Replaces input box with full-width completion pill button) -->
-            <button v-else-if="playerState === PlayerState.CHAPTER_COMPLETE"
+            <!-- Mode 1: Chapter Completion State (Replaces input box with full-width completion pill button) -->
+            <button v-if="playerState === PlayerState.CHAPTER_COMPLETE"
                     type="button"
                     class="tut-full-complete-btn"
                     @click.stop="submit()"
@@ -816,8 +803,19 @@ onUnmounted(() => {
               <i class="fa fa-arrow-right tut-complete-icon" aria-hidden="true"></i>
             </button>
 
-            <!-- Mode 3: Normal Command Input Bar -->
+            <!-- Mode 2: Normal Command Input Bar with Non-Blocking Floating Overflow Toast -->
             <template v-else>
+              <Transition name="tut-toast-fade">
+                <button v-if="isScrollOverflowActive && !isScrolling"
+                        type="button"
+                        class="tut-pager-toast"
+                        @click.prevent="pageForward(true)"
+                        aria-label="Scroll to read more output">
+                  <i class="fa fa-chevron-circle-down tut-toast-icon" aria-hidden="true"></i>
+                  <span>{{ toastText }}</span>
+                </button>
+              </Transition>
+
               <span class="tut-caret">&gt;</span>
               <input ref="inputEl" v-model="entry" @keydown.enter.prevent="submit"
                      autocomplete="off" spellcheck="false"
@@ -1377,8 +1375,7 @@ onUnmounted(() => {
 .tut-secondary-link:hover, .tut-secondary-link:focus-visible { background: darkgoldenrod; color: #3a3a3a !important; text-decoration: none !important; }
 .tut-note { color: #8f8a7d; font-size: 12.5px; margin: 4px 0 6px; }
 
-.tut-prompt { display: flex; align-items: center; gap: 8px; border-top: 1px solid #23262e; padding: 10px 14px; background: #08080a; transition: background 0.25s, border-color 0.25s; }
-.tut-prompt.is-pager { background: linear-gradient(180deg, #1a160a, #0b0c0f); border-top-color: rgba(255, 215, 0, 0.6); padding: 8px 12px; }
+.tut-prompt { display: flex; align-items: center; gap: 8px; border-top: 1px solid #23262e; padding: 10px 14px; background: #08080a; transition: background 0.25s, border-color 0.25s; position: relative; }
 
 /* Full-width Pager Action Pill Button */
 .tut-full-pager-btn {
