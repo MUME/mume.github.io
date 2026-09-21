@@ -11,7 +11,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useData, useRoute, useRouter, withBase } from 'vitepress'
 import { data as rawChapters } from '../../../play/tutorial/chapters.data.js'
 import { formatInlineMarkdown } from '../utils/markdown'
-import { normalizeChapterPath, findChapterByPath, Chapter } from '../utils/tutorial'
+import { normalizeChapterPath, findChapterByPath, Chapter, PlayerState } from '../utils/tutorial'
 import { isOverflowActive } from '../utils/pager'
 
 const allChapters = rawChapters as Chapter[]
@@ -19,8 +19,6 @@ const allChapters = rawChapters as Chapter[]
 const PLAY_HUB_URL = '/play/'
 const BROWSER_PLAY_URL = '/play/browser'
 const NEWCOMERS_URL = '/resources/newcomers'
-
-type PlayerState = 'AWAITING_COMMAND' | 'PAGING_OUTPUT' | 'PLAYING_BEAT' | 'CHAPTER_COMPLETE'
 
 const router = useRouter()
 const route = useRoute()
@@ -91,7 +89,7 @@ const currentSubStep = computed(() => stepsList.value[subStepIdx.value] || null)
 const mumeResponses = computed(() => frontmatter.value?.responses || currentChapterObj.value?.responses || {})
 
 const log = ref<any[]>([])
-const playerState = ref<PlayerState>('AWAITING_COMMAND')
+const playerState = ref<PlayerState>(PlayerState.AWAITING_COMMAND)
 const pendingNextAction = ref<(() => void) | null>(null)
 const entry = ref('')
 const isSheetOpen = ref(false)
@@ -179,6 +177,38 @@ function handleKeydown(e: KeyboardEvent) {
 const logEl = ref<HTMLElement | null>(null)
 const inputEl = ref<HTMLInputElement | null>(null)
 
+const isTouchDevice = ref(false)
+
+const promptPlaceholder = computed(() => {
+  if (isScrollOverflowActive.value && !isScrolling.value && !entry.value) {
+    return isTouchDevice.value
+      ? '-- More output -- (Tap to scroll)'
+      : '-- More output -- (Press Space, Enter, or click to scroll)'
+  }
+  if (playerState.value === PlayerState.CHAPTER_COMPLETE) {
+    if (isTouchDevice.value) {
+      return nextChapterUrl.value
+        ? 'Chapter complete. Tap to continue'
+        : 'Tutorial complete! Tap for options'
+    } else {
+      return nextChapterUrl.value
+        ? 'Chapter complete. Press Enter or click to continue'
+        : 'Tutorial complete! Press Enter or click for options'
+    }
+  }
+  return 'Type command...'
+})
+
+const promptButtonLabel = computed(() => {
+  if (isScrollOverflowActive.value && !isScrolling.value && !entry.value) {
+    return 'More ↓'
+  }
+  if (playerState.value === PlayerState.CHAPTER_COMPLETE) {
+    return nextChapterUrl.value ? 'Next Chapter →' : 'Options →'
+  }
+  return 'Send'
+})
+
 // Pager state management
 const isScrollOverflowActive = ref(false)
 const isScrolling = ref(false)
@@ -216,7 +246,7 @@ function pageForward(preventFocus = false) {
   container.scrollBy({ top: pageStep, behavior: 'smooth' })
   setTimeout(() => {
     updatePagerState()
-    if (!preventFocus && playerState.value === 'AWAITING_COMMAND') {
+    if (!preventFocus && playerState.value === PlayerState.AWAITING_COMMAND) {
       focusInput()
     }
   }, 300)
@@ -301,14 +331,14 @@ function scrollLogToLatestBlock() {
   }
 }
 
-function goToStep(targetIdx: number) {
+function goToStep(targetIdx: number, allowAutoAdvance: boolean = true) {
   clearAutoAdvanceTimer()
   pendingNextAction.value = null
   if (targetIdx < 0) targetIdx = 0
   if (targetIdx >= stepsList.value.length) targetIdx = Math.max(0, stepsList.value.length - 1)
 
   subStepIdx.value = targetIdx
-  playerState.value = 'AWAITING_COMMAND'
+  playerState.value = PlayerState.AWAITING_COMMAND
   entry.value = ''
 
   const newLog: any[] = []
@@ -371,8 +401,14 @@ function goToStep(targetIdx: number) {
       body: curSub.text || curSub.response
     })
     scrollLogToLatestBlock()
-    checkAndScheduleAutoAdvance()
+    if (allowAutoAdvance) {
+      checkAndScheduleAutoAdvance()
+    } else {
+      playerState.value = PlayerState.AWAITING_COMMAND
+      focusInput()
+    }
   } else {
+    playerState.value = PlayerState.AWAITING_COMMAND
     focusInput()
   }
 }
@@ -383,11 +419,11 @@ function checkAndScheduleAutoAdvance() {
     updatePagerState()
     if (isScrollOverflowActive.value) {
       // Content overflows terminal viewport: transition state to PAGING_OUTPUT
-      playerState.value = 'PAGING_OUTPUT'
+      playerState.value = PlayerState.PAGING_OUTPUT
       pendingNextAction.value = () => advanceSubStep()
       return
     }
-    playerState.value = 'PLAYING_BEAT'
+    playerState.value = PlayerState.PLAYING_BEAT
     autoAdvanceTimer = setTimeout(() => {
       advanceSubStep()
     }, 300)
@@ -399,7 +435,7 @@ function renderStepLog() {
 }
 
 function completeChapter() {
-  playerState.value = 'CHAPTER_COMPLETE'
+  playerState.value = PlayerState.CHAPTER_COMPLETE
   pendingNextAction.value = null
   log.value.push({
     kind: 'chapter_complete',
@@ -427,7 +463,7 @@ function advanceSubStep() {
     const nextSub = stepsList.value[subStepIdx.value] || null
 
     if (nextSub && nextSub.ask) {
-      playerState.value = 'AWAITING_COMMAND'
+      playerState.value = PlayerState.AWAITING_COMMAND
       log.value.push({
         kind: 'prompt_next',
         stepIndex: subStepIdx.value,
@@ -447,7 +483,7 @@ function advanceSubStep() {
       const followingSub = stepsList.value[subStepIdx.value + 1] || null
       if (followingSub && followingSub.ask) {
         subStepIdx.value++
-        playerState.value = 'AWAITING_COMMAND'
+        playerState.value = PlayerState.AWAITING_COMMAND
         log.value.push({
           kind: 'prompt_next',
           stepIndex: subStepIdx.value,
@@ -467,7 +503,7 @@ function advanceSubStep() {
     setTimeout(() => {
       updatePagerState()
       if (isScrollOverflowActive.value) {
-        playerState.value = 'PAGING_OUTPUT'
+        playerState.value = PlayerState.PAGING_OUTPUT
         pendingNextAction.value = () => completeChapter()
       } else {
         completeChapter()
@@ -477,8 +513,14 @@ function advanceSubStep() {
 }
 
 function prevSubStep() {
+  clearAutoAdvanceTimer()
   if (subStepIdx.value > 0) {
-    goToStep(subStepIdx.value - 1)
+    let prevIdx = subStepIdx.value - 1
+    // Skip backward over passive story beats so back button lands on the previous interactive quest step
+    while (prevIdx > 0 && !stepsList.value[prevIdx]?.ask) {
+      prevIdx--
+    }
+    goToStep(prevIdx, false)
   } else if (prevChapterUrl.value) {
     navigateToUrl(prevChapterUrl.value)
   }
@@ -507,7 +549,7 @@ function submit() {
   }
 
   // If chapter is complete or pending completion at end of scroll
-  if (playerState.value === 'CHAPTER_COMPLETE') {
+  if (playerState.value === PlayerState.CHAPTER_COMPLETE) {
     entry.value = ''
     if (nextChapterUrl.value) {
       navigateToUrl(nextChapterUrl.value)
@@ -577,6 +619,7 @@ let logResizeObserver: any = null
 
 onMounted(() => {
   if (typeof window !== 'undefined') {
+    isTouchDevice.value = 'ontouchstart' in window || navigator.maxTouchPoints > 0
     renderStepLog()
     if (window.innerWidth >= 1024) {
       isSheetOpen.value = true
@@ -750,26 +793,26 @@ onUnmounted(() => {
 
           <div class="tut-prompt"
                :class="{
-                 'is-pager': isScrollOverflowActive && !isScrolling,
-                 'is-complete': playerState === 'CHAPTER_COMPLETE'
+                 'is-pager': isScrollOverflowActive && !isScrolling && !entry,
+                 'is-complete': playerState === PlayerState.CHAPTER_COMPLETE
                }"
                @click.prevent="(isScrollOverflowActive && !entry) ? pageForward(true) : submit()">
             <span class="tut-caret">&gt;</span>
             <input ref="inputEl" v-model="entry" @keydown.enter.prevent="submit"
                    autocomplete="off" spellcheck="false"
-                   :readonly="(isScrollOverflowActive && !isScrolling && !entry) || playerState === 'CHAPTER_COMPLETE'"
-                   :inputmode="((isScrollOverflowActive && !isScrolling && !entry) || playerState === 'CHAPTER_COMPLETE') ? 'none' : 'text'"
-                   :placeholder="isScrollOverflowActive && !isScrolling && !entry ? `[ MORE — Press Space/Enter or Tap ]` : (playerState === 'CHAPTER_COMPLETE' ? (nextChapterUrl ? '[ CHAPTER COMPLETE — Press Enter or Tap for Next Chapter → ]' : '[ TUTORIAL COMPLETE — Press Enter or Tap for Options → ]') : 'type here, then press Enter')"
+                   :readonly="(isScrollOverflowActive && !isScrolling && !entry) || playerState === PlayerState.CHAPTER_COMPLETE"
+                   :inputmode="((isScrollOverflowActive && !isScrolling && !entry) || playerState === PlayerState.CHAPTER_COMPLETE) ? 'none' : 'text'"
+                   :placeholder="promptPlaceholder"
                    aria-label="Type a command" />
             <button type="button"
                     class="tut-send-btn"
                     :class="{
                       'tut-pager-btn': isScrollOverflowActive && !isScrolling && !entry,
-                      'tut-next-ch-btn': playerState === 'CHAPTER_COMPLETE'
+                      'tut-next-ch-btn': playerState === PlayerState.CHAPTER_COMPLETE
                     }"
                     @click.stop="(isScrollOverflowActive && !entry) ? pageForward(true) : submit()"
                     aria-label="Send Command">
-              {{ (isScrollOverflowActive && !isScrolling && !entry) ? 'More ↓' : (playerState === 'CHAPTER_COMPLETE' ? (nextChapterUrl ? 'Next Chapter →' : 'Options →') : 'Send') }}
+              {{ promptButtonLabel }}
             </button>
           </div>
         </div>

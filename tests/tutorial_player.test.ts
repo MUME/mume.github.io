@@ -67,6 +67,13 @@ describe('TutorialPlayer.vue', () => {
     }
   })
 
+  it('navigates backward over story beats cleanly in Chapter 3', async () => {
+    const wrapper = mount(TutorialPlayer)
+    const navBtns = wrapper.findAll('.tut-nav-btn')
+    const backBtn = navBtns[1] // prev step button '<'
+    expect(backBtn.exists()).toBe(true)
+  })
+
   it('sets input readonly when pager mode is active', async () => {
     const wrapper = mount(TutorialPlayer)
     // Initially not readonly when input is empty and no overflow

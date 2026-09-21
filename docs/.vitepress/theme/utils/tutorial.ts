@@ -2,6 +2,13 @@
  * Utility functions for tutorial routing and chapter calculations.
  */
 
+export enum PlayerState {
+  AWAITING_COMMAND = 'AWAITING_COMMAND',
+  PAGING_OUTPUT = 'PAGING_OUTPUT',
+  PLAYING_BEAT = 'PLAYING_BEAT',
+  CHAPTER_COMPLETE = 'CHAPTER_COMPLETE'
+}
+
 export interface Chapter {
   chapterNum: number
   title: string
