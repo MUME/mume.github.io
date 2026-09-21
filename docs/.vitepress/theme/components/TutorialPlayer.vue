@@ -490,13 +490,13 @@ function submit() {
   }
 
   if (!cmd) {
-    log.value.push({ kind: 'error', text: curStep.hint || (`Type: ${curStep.ask}`) })
+    log.value.push({ kind: 'error', text: curStep.hint || (`Type: ${curStep.ask || 'command'}`) })
     scrollLogToLatestBlock()
     focusInput()
     return
   }
 
-  const accept = curStep.accept || [curStep.ask]
+  const accept = curStep.accept || (curStep.ask ? [curStep.ask] : [])
   const ok = accept.some(a => a.toLowerCase() === cmd)
 
   if (ok) {
@@ -509,10 +509,10 @@ function submit() {
     advanceSubStep()
   } else if (mumeResponses.value[cmd]) {
     log.value.push({ kind: 'example', body: mumeResponses.value[cmd] })
-    log.value.push({ kind: 'error', text: 'Good try! To proceed in this step, ' + (curStep.hint || (`try: ${curStep.ask}`)) })
+    log.value.push({ kind: 'error', text: 'Good try! To proceed in this step, ' + (curStep.hint || (`try: ${curStep.ask || 'the required command'}`)) })
     scrollLogToLatestBlock()
   } else {
-    log.value.push({ kind: 'error', text: 'MUME does not know that one here. ' + (curStep.hint || (`Try: ${curStep.ask}`)) })
+    log.value.push({ kind: 'error', text: 'MUME does not know that one here. ' + (curStep.hint || (`Try: ${curStep.ask || 'the required command'}`)) })
     scrollLogToLatestBlock()
   }
   focusInput()
