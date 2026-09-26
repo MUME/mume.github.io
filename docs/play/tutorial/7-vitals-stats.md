@@ -1,11 +1,11 @@
 ---
 title: "Checking Vitals & Stats"
-description: "Inspect HP, Mana, Movement, combat parameters, and full character attributes."
+description: "Inspect your hit points, mana points (mana is used for casting spells - you'll need to practise magic later should you want to cast spells), movement points, combat parameters and full character attributes."
 teach:
   - command: "score"
     desc: "check current Hit Points, Mana, and Movement Points"
   - command: "stat"
-    desc: "view OB, DB, PB combat bonuses and experience needed to level"
+    desc: "view offensive, defensive and parry combat bonuses as well as the experience and travel points needed to level"
   - command: "info"
     desc: "display full character sheet attributes and travel points"
 steps:
@@ -73,7 +73,7 @@ responses:
     *+->
 ---
 
-# Chapter 5: Checking Vitals & Physical Readiness
+# Checking your Statistics
 
 Standing tall in the morning breeze, Fuor takes stock of his physical stamina and martial capabilities. `score` reveals health and movement points, `stat` measures offensive and defensive bonuses, and `info` presents Fuor's complete hero record.
 

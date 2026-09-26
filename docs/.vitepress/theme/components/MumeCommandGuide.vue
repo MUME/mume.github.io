@@ -8,44 +8,44 @@ const categories = ['All', 'Basics', 'Gear & Inventory', 'Vitals & Stats', 'Comb
 
 const commands = [
   // Basics
-  { category: 'Basics', command: 'look / l', syntax: 'look [object/room]', desc: 'Examine your surroundings, a room, player, or item.', chapter: '2-look-exits', chNum: 2 },
-  { category: 'Basics', command: 'examine', syntax: 'examine <item/container>', desc: 'Inspect containers or items in detail.', chapter: '3-examining-containers', chNum: 3 },
-  { category: 'Basics', command: 'exits', syntax: 'exits', desc: 'Display all obvious room exit directions.', chapter: '2-look-exits', chNum: 2 },
-  { category: 'Basics', command: 'n / s / e / w', syntax: 'north / south / east / west', desc: 'Navigate across Middle-earth rooms and paths.', chapter: '7-movement-doors', chNum: 7 },
-  { category: 'Basics', command: 'where', syntax: 'where', desc: 'Locate players currently in your zone.', chapter: '5-vitals-stats', chNum: 5 },
-  { category: 'Basics', command: 'time', syntax: 'time', desc: 'Check current Middle-earth time and calendar date.', chapter: '5-vitals-stats', chNum: 5 },
+  { category: 'Basics', command: 'look / l', syntax: 'look [object/room]', desc: 'Examine your surroundings, a room, player, or item.', chapter: '3-look-exits', chNum: 3 },
+  { category: 'Basics', command: 'examine', syntax: 'examine <item/container>', desc: 'Inspect containers or items in detail.', chapter: '5-examining-containers', chNum: 5 },
+  { category: 'Basics', command: 'exits', syntax: 'exits', desc: 'Display all obvious room exit directions.', chapter: '3-look-exits', chNum: 3 },
+  { category: 'Basics', command: 'n / s / e / w', syntax: 'north / south / east / west', desc: 'Navigate across Middle-earth rooms and paths.', chapter: '4-movement-doors', chNum: 4 },
+  { category: 'Basics', command: 'where', syntax: 'where', desc: 'Locate players currently in your zone.', chapter: '7-vitals-stats', chNum: 7 },
+  { category: 'Basics', command: 'time', syntax: 'time', desc: 'Check current Middle-earth time and calendar date.', chapter: '7-vitals-stats', chNum: 7 },
 
   // Gear & Inventory
-  { category: 'Gear & Inventory', command: 'inventory / inv', syntax: 'inventory', desc: 'List items carried in your hands and pack.', chapter: '6-equipment-wielding', chNum: 6 },
-  { category: 'Gear & Inventory', command: 'equipment / eq', syntax: 'equipment', desc: 'Display all currently worn gear, armor, and weapons.', chapter: '6-equipment-wielding', chNum: 6 },
-  { category: 'Gear & Inventory', command: 'wield', syntax: 'wield <weapon>', desc: 'Equip your main weapon into your primary hand.', chapter: '6-equipment-wielding', chNum: 6 },
-  { category: 'Gear & Inventory', command: 'wear', syntax: 'wear <item> [location]', desc: 'Wear armor or attach lanterns/knives to your belt.', chapter: '6-equipment-wielding', chNum: 6 },
-  { category: 'Gear & Inventory', command: 'put / get', syntax: 'put item sack / get item sack', desc: 'Stow or retrieve supplies from containers.', chapter: '3-examining-containers', chNum: 3 },
+  { category: 'Gear & Inventory', command: 'inventory / inv', syntax: 'inventory', desc: 'List items carried in your hands and pack.', chapter: '8-equipment-wielding', chNum: 8 },
+  { category: 'Gear & Inventory', command: 'equipment / eq', syntax: 'equipment', desc: 'Display all currently worn gear, armor, and weapons.', chapter: '8-equipment-wielding', chNum: 8 },
+  { category: 'Gear & Inventory', command: 'wield', syntax: 'wield <weapon>', desc: 'Equip your main weapon into your primary hand.', chapter: '8-equipment-wielding', chNum: 8 },
+  { category: 'Gear & Inventory', command: 'wear', syntax: 'wear <item> [location]', desc: 'Wear armor or attach lanterns/knives to your belt.', chapter: '8-equipment-wielding', chNum: 8 },
+  { category: 'Gear & Inventory', command: 'put / get', syntax: 'put item sack / get item sack', desc: 'Stow or retrieve supplies from containers.', chapter: '5-examining-containers', chNum: 5 },
 
   // Vitals & Stats
-  { category: 'Vitals & Stats', command: 'score / sc', syntax: 'score', desc: 'Quick check of Hit Points, Mana, and Movement Points.', chapter: '5-vitals-stats', chNum: 5 },
-  { category: 'Vitals & Stats', command: 'stat', syntax: 'stat', desc: 'Display OB, DB, PB combat bonuses and experience needed.', chapter: '5-vitals-stats', chNum: 5 },
-  { category: 'Vitals & Stats', command: 'info', syntax: 'info', desc: 'Full character sheet including age, attributes, alignment.', chapter: '5-vitals-stats', chNum: 5 },
-  { category: 'Vitals & Stats', command: 'eat / drink', syntax: 'eat <food> / drink <container>', desc: 'Satisfy hunger and thirst to maintain rapid recovery.', chapter: '12-recovery-rest', chNum: 12 },
-  { category: 'Vitals & Stats', command: 'change wimpy', syntax: 'change wimpy 15', desc: 'Set automatic flee threshold when HP drops.', chapter: '4-safety-wimpy', chNum: 4 },
+  { category: 'Vitals & Stats', command: 'score / sc', syntax: 'score', desc: 'Quick check of Hit Points, Mana, and Movement Points.', chapter: '7-vitals-stats', chNum: 7 },
+  { category: 'Vitals & Stats', command: 'stat', syntax: 'stat', desc: 'Display OB, DB, PB combat bonuses and experience needed.', chapter: '7-vitals-stats', chNum: 7 },
+  { category: 'Vitals & Stats', command: 'info', syntax: 'info', desc: 'Full character sheet including age, attributes, alignment.', chapter: '7-vitals-stats', chNum: 7 },
+  { category: 'Vitals & Stats', command: 'eat / drink', syntax: 'eat <food> / drink <container>', desc: 'Satisfy hunger and thirst to maintain rapid recovery.', chapter: '13-recovery-rest', chNum: 13 },
+  { category: 'Vitals & Stats', command: 'change wimpy', syntax: 'change wimpy 15', desc: 'Set automatic flee threshold when HP drops.', chapter: '6-safety-wimpy', chNum: 6 },
 
   // Combat & Tactics
-  { category: 'Combat & Tactics', command: 'consider', syntax: 'consider <target>', desc: 'Assess target difficulty before attacking.', chapter: '10-combat-stances', chNum: 10 },
-  { category: 'Combat & Tactics', command: 'hit / kill', syntax: 'hit <target>', desc: 'Engage an enemy target in combat.', chapter: '10-combat-stances', chNum: 10 },
-  { category: 'Combat & Tactics', command: 'change mood', syntax: 'cha m <aggressive/wimpy>', desc: 'Adjust combat stance to boost OB or DB.', chapter: '10-combat-stances', chNum: 10 },
-  { category: 'Combat & Tactics', command: 'flee', syntax: 'flee', desc: 'Attempt emergency escape from dangerous combat.', chapter: '11-emergency-fleeing', chNum: 11 },
+  { category: 'Combat & Tactics', command: 'consider', syntax: 'consider <target>', desc: 'Assess target difficulty before attacking.', chapter: '11-combat-stances', chNum: 11 },
+  { category: 'Combat & Tactics', command: 'hit / kill', syntax: 'hit <target>', desc: 'Engage an enemy target in combat.', chapter: '11-combat-stances', chNum: 11 },
+  { category: 'Combat & Tactics', command: 'change mood', syntax: 'cha m <aggressive/wimpy>', desc: 'Adjust combat stance to boost OB or DB.', chapter: '11-combat-stances', chNum: 11 },
+  { category: 'Combat & Tactics', command: 'flee', syntax: 'flee', desc: 'Attempt emergency escape from dangerous combat.', chapter: '12-emergency-fleeing', chNum: 12 },
 
   // Guild & Rest
-  { category: 'Guild & Rest', command: 'practice / prac', syntax: 'prac <skill>', desc: 'Train weapon proficiencies and skills at a guildmaster.', chapter: '13-guilds-training', chNum: 13 },
-  { category: 'Guild & Rest', command: 'rest / sleep', syntax: 'rest / sleep', desc: 'Sit or sleep to accelerate hit point and move recovery.', chapter: '12-recovery-rest', chNum: 12 },
-  { category: 'Guild & Rest', command: 'wake / stand', syntax: 'wake / stand', desc: 'Awaken and stand up to prepare for movement or combat.', chapter: '12-recovery-rest', chNum: 12 },
+  { category: 'Guild & Rest', command: 'practice / prac', syntax: 'prac <skill>', desc: 'Train weapon proficiencies and skills at a guildmaster.', chapter: '14-guilds-training', chNum: 14 },
+  { category: 'Guild & Rest', command: 'rest / sleep', syntax: 'rest / sleep', desc: 'Sit or sleep to accelerate hit point and move recovery.', chapter: '13-recovery-rest', chNum: 13 },
+  { category: 'Guild & Rest', command: 'wake / stand', syntax: 'wake / stand', desc: 'Awaken and stand up to prepare for movement or combat.', chapter: '13-recovery-rest', chNum: 13 },
 
   // Social & Rent
-  { category: 'Social & Rent', command: 'say / tell', syntax: 'say <text> / tell <name> <text>', desc: 'Speak aloud locally or send private direct messages.', chapter: '8-npc-communication', chNum: 8 },
-  { category: 'Social & Rent', command: 'follow / fol', syntax: 'follow <player>', desc: 'Follow an experienced player or ranger and join their party.', chapter: '8-npc-communication', chNum: 8 },
-  { category: 'Social & Rent', command: 'give', syntax: 'give <item> <person>', desc: 'Give an item to an NPC or player.', chapter: '9-shopping-trading', chNum: 9 },
-  { category: 'Social & Rent', command: 'list / buy', syntax: 'list / buy <item>', desc: 'Browse merchant wares and buy provisions.', chapter: '9-shopping-trading', chNum: 9 },
-  { category: 'Social & Rent', command: 'offer / rent', syntax: 'offer / rent', desc: 'Check inn room rates and safely save character equipment.', chapter: '14-safe-haven-rent', chNum: 14 }
+  { category: 'Social & Rent', command: 'say / tell', syntax: 'say <text> / tell <name> <text>', desc: 'Speak aloud locally or send private direct messages.', chapter: '9-npc-communication', chNum: 9 },
+  { category: 'Social & Rent', command: 'follow / fol', syntax: 'follow <player>', desc: 'Follow an experienced player or ranger and join their party.', chapter: '9-npc-communication', chNum: 9 },
+  { category: 'Social & Rent', command: 'give', syntax: 'give <item> <person>', desc: 'Give an item to an NPC or player.', chapter: '10-shopping-trading', chNum: 10 },
+  { category: 'Social & Rent', command: 'list / buy', syntax: 'list / buy <item>', desc: 'Browse merchant wares and buy provisions.', chapter: '10-shopping-trading', chNum: 10 },
+  { category: 'Social & Rent', command: 'offer / rent', syntax: 'offer / rent', desc: 'Check inn room rates and safely save character equipment.', chapter: '15-safe-haven-rent', chNum: 15 }
 ]
 
 const filteredCommands = computed(() => {

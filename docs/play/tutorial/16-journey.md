@@ -1,6 +1,6 @@
 ---
-title: "Hero's Graduation & Web Client"
-description: "Familiarize yourself with the MUME Web Client, live mapper, and community Rangers."
+title: "Off to Middle-earth"
+description: "You are ready to play for real - time to log into the web client and begin your adventure."
 teach:
   - command: "look"
     desc: "inspect your surroundings and client layout"
@@ -16,53 +16,40 @@ steps:
       - "look"
       - "l"
     hint: "Type: look"
-  - story: |
-      ![Web Client Interface](../../public/assets/images/tutorial-desc.png)
-      When connected via the MUME Web Client, you'll enjoy integrated live mapping and stats tracking.
   - ask: "map"
     note: "Type `map` to examine the live MMapper radar view."
     accept:
       - "map"
       - "m"
     hint: "Type: map"
-  - story: |
-      ![MMapper Live Radar](../../public/assets/images/tutorial-map.png)
-      MMapper tracks your position in real-time as you journey through Middle-earth.
   - ask: "who ranger"
     note: "MUME Rangers exist specifically to assist new players! Check active Rangers with `who ranger`."
     accept:
       - "who ranger"
       - "who rangers"
-      - "who"
     hint: "Type: who ranger"
 responses:
   look: |
     The Foaming Mug's Beer Garden
     A quiet courtyard paved with cobblestones lies behind the tavern.
-    Exits: north, east.
-    Ranger Ermin smiles warmly at you.
+    Exits: south, west.
 
     *+->
-  map: |
-    #   .   .
-    |   |   |
-    .-*---*---*-.
-    |   |   |
-    #   .   .
-
-    *+->
+  map: "    #   .   .\n    |   |   |\n  .-*---*---*-.\n    |   |   |\n    #   .   .\n\n*+->"
   who ranger: |
     Rangers
     -------
+    Relim N'Ekasrof the Dunadan
 
-    0 such allies or visible Ainur on.
+    1 such allies or visible Ainur on.
 
     *+->
   who rangers: |
     Rangers
     -------
+    Relim N'Ekasrof the Dunadan
 
-    0 such allies or visible Ainur on.
+    1 such allies or visible Ainur on.
 
     *+->
   who: |
@@ -71,6 +58,6 @@ responses:
     *+->
 ---
 
-# Chapter 15: Hero's Graduation
+# Off to Middle-Earth
 
-Congratulations on guiding Fuor through the Black Hills walkthrough! Follow the interactive quest prompts below to complete your graduation.
+That's the basics - you've learned to look, move, examine, gear up, talk, trade, fight, flee, rest, train and rent. When you play for real you'll do it all in the **web client**, with a live map (MMapper) beside the text. You'll start your adventures with **Gandalf** before you find yourself back in Tower Hills, where your life in MUME will begin. Remember - Rangers (who are actual characters) are online to help new players; use `who ranger` to see who is online.
