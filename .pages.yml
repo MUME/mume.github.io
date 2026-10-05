@@ -1,0 +1,73 @@
+# User guide: CMS.md
+# No fields: edit the complete Markdown source, including YAML, HTML and Vue.
+media:
+  input: docs/public/assets/images
+  output: /assets/images
+  extensions: [png, jpg, jpeg, gif, webp, svg]
+
+content:
+  - name: pages
+    label: Main pages
+    type: collection
+    path: docs
+    format: yaml-frontmatter
+    subfolders: false
+    operations:
+      rename: false
+      delete: false
+
+  - name: about
+    label: About MUME
+    type: collection
+    path: docs/about
+    format: yaml-frontmatter
+    subfolders: false
+    operations:
+      rename: false
+      delete: false
+
+  - name: community
+    label: Community and interviews
+    type: collection
+    path: docs/community
+    format: yaml-frontmatter
+    subfolders: true
+    view:
+      layout: tree
+    operations:
+      rename: false
+      delete: false
+
+  - name: news
+    label: News
+    type: collection
+    path: docs/news
+    format: yaml-frontmatter
+    subfolders: false
+    operations:
+      rename: false
+      delete: false
+
+  - name: resources
+    label: Resources and questionnaires
+    type: collection
+    path: docs/resources
+    format: yaml-frontmatter
+    subfolders: true
+    view:
+      layout: tree
+    operations:
+      rename: false
+      delete: false
+
+  - name: play
+    label: Play and tutorial chapters
+    type: collection
+    path: docs/play
+    format: yaml-frontmatter
+    subfolders: true
+    view:
+      layout: tree
+    operations:
+      rename: false
+      delete: false

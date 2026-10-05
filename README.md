@@ -8,7 +8,7 @@ The site is built with **VitePress** and designed to match the style and layout 
 
 - **VitePress**: Fast, Vue-powered static site generator.
 - **MUME Styling**: Integrated CSS and assets to maintain visual consistency with the MUME ecosystem.
-- **Player Interviews**: Interviews are stored as Markdown files in `docs/interviews/` and rendered using VitePress's file-based routing.
+- **Player Interviews**: Interviews are stored as Markdown files in `docs/community/interviews/` and rendered using VitePress's file-based routing.
 - **Custom Theme**: A custom VitePress theme located in `docs/.vitepress/theme/` implements the MUME look and feel.
 
 ## Development
@@ -53,5 +53,7 @@ git commit -m "chore: update dependencies"
 The site is automatically deployed to GitHub Pages via GitHub Actions when changes are pushed to the `master` branch.
 
 ## Contributing
+
+For browser-based content editing, see the [Pages CMS user guide](CMS.md). It covers first-time access, editing pages and tutorials, uploading images, and publishing changes.
 
 Interviews and content can be updated by modifying the Markdown files in the `docs/` directory. For theme or functionality changes, please refer to the `docs/.vitepress/theme/` directory.
