@@ -22,16 +22,27 @@ See the official [quick start](https://pagescms.org/docs/quick-start/) and [coll
 4. Edit the text, review your changes, and save.
 5. For `master`, check the repository's [Actions page](https://github.com/MUME/mume.github.io/actions) for a successful deployment, then open [docs.mume.org](https://docs.mume.org) to check the result.
 
-| CMS section | Files | Typical edits |
+| CMS section | Editor | Typical edits |
 | --- | --- | --- |
-| Main pages | `docs/*.md` | Homepage, community links, open-source projects |
-| About MUME | `docs/about/*.md` | Features, history, building information |
-| Community and interviews | `docs/community/` | Discord information and player interviews |
-| News | `docs/news/*.md` | News pages |
-| Resources and questionnaires | `docs/resources/` | Newcomer resources, events, historical questionnaires |
-| Play and tutorial chapters | `docs/play/` | Client guides and interactive tutorial chapters |
+| Interviews (visual editor) | WYSIWYG | Player and developer interviews in `docs/community/interviews/`, excluding the index |
+| Articles (visual editor) | WYSIWYG | MUME features, MUME VIII, MUME IX, and the Mudlle events guide |
+| Interview index (source) | Markdown source | Interview cards and links |
+| Main pages (source) | Markdown source | Homepage, community links, open-source projects |
+| About MUME (source) | Markdown source | Other history and building pages |
+| Community pages (source) | Markdown source | Community landing page and Discord information |
+| News (source) | Markdown source | News pages |
+| Resources and questionnaires (source) | Markdown source | Newcomer resources and historical questionnaires |
+| Play and tutorial chapters (source) | Markdown source | Client guides and interactive tutorial chapters |
 
-The editor shows the **complete Markdown source**, including any frontmatter between `---` lines. This preserves the site's HTML, Vue components, and interactive tutorial data. It is not a visual page designer: leave existing tags, component names, and YAML structure intact when changing prose. Files without frontmatter, such as historical interviews, do not need it added.
+### Use the visual editor
+
+Open an interview or one of the articles and edit its **Content** field using the formatting toolbar for headings, bold text, lists, links, and images. Pages CMS saves the result as Markdown. The article forms also provide separate page title and description fields. For interviews, keep the visible heading and historical date and author in the content itself.
+
+Use the **Editor / Source** switch on the Content field when you need to inspect or edit its Markdown. The visual editor previews content formatting; check the published website to see the site's final layout. Existing frontmatter metadata is preserved on save. Interviews without frontmatter do not need title or date fields added.
+
+### Use the source editor
+
+Sections marked **(source)** show the **complete Markdown source**, including any frontmatter between `---` lines. This preserves the site's HTML, Vue components, and interactive tutorial data. Leave existing tags, component names, and YAML structure intact when changing prose.
 
 Basic Markdown examples:
 
@@ -50,13 +61,13 @@ Some **bold text** and a [link](https://mume.org).
 
 Open the appropriate section and folder, create a Markdown file with a short lowercase filename such as `player-name.md`, and fill in its content. Copy an existing similar page if you need a starting point.
 
-Interviews belong in `docs/community/interviews/`. Keep the original interview date and author in the text, then edit `docs/community/interviews/index.md` to add its link and metadata. Use the existing entries as a template.
+Create interviews in **Interviews (visual editor)**, which stores them in `docs/community/interviews/`. Keep the original interview date and author in the text, then open **Interview index (source)** to add its link and metadata in `docs/community/interviews/index.md`. Use the existing entries as a template.
 
 A new ordinary page also needs a link from an appropriate index or related page so readers can find it. Changes to the site's top navigation require a maintainer to update `docs/.vitepress/config.js`; that file is outside the CMS content sections. Renaming and deleting pages are disabled in the CMS to protect existing links; ask a maintainer if either is needed.
 
 ## Edit interactive tutorials
 
-In **Play and tutorial chapters**, open the `tutorial` folder. Read the [tutorial authoring guide](docs/play/TUTORIAL.md) before changing a chapter's interactive data.
+In **Play and tutorial chapters (source)**, open the `tutorial` folder. Read the [tutorial authoring guide](docs/play/TUTORIAL.md) before changing a chapter's interactive data.
 
 - Keep chapter filenames in the form `17-new-topic.md`; the numeric prefix controls their sequence. Choose an unused number for a new chapter.
 - Keep `title`, `description`, `teach`, `steps`, and `responses` inside the YAML frontmatter, above the closing `---`.
@@ -69,7 +80,7 @@ After publication, open the chapter and try its commands, aliases, hints, and re
 
 Open the CMS media library and upload your image, using a descriptive filename. Images are stored in `docs/public/assets/images/`; subfolders such as `tutorial-maps` contain existing tutorial assets.
 
-Insert the public path manually in the Markdown source:
+In a visual editor, use the image control to select or upload an image. In a source editor, insert the public path manually:
 
 ```markdown
 ![Map of the tavern](/assets/images/tutorial-maps/common-room.jpg)
@@ -89,6 +100,8 @@ If a deployment fails, ask a maintainer to inspect the Actions log; malformed YA
 
 ## Configuration reference for maintainers
 
-The repository's root `.pages.yml` defines the content sections and maps image storage to VitePress's public URLs. Sections use `yaml-frontmatter` with no structured `fields`, which selects the [raw file editor](https://pagescms.org/docs/configuration/content/editors/). This avoids passing Vue markup or tutorial YAML through a rich-text editor. Recursive browsing is enabled only for the content folders that need it, keeping theme code and public assets outside the content editor.
+The repository's root `.pages.yml` defines the content sections and maps image storage to VitePress's public URLs. Interviews and four ordinary Markdown articles use a [rich-text body field](https://pagescms.org/docs/configuration/fields/rich-text/) with Markdown output and the Editor / Source switch enabled. `settings.content.merge: true` preserves frontmatter keys outside the configured fields.
+
+Other sections use `yaml-frontmatter` with no structured `fields`, which selects the [raw file editor](https://pagescms.org/docs/configuration/content/editors/). This keeps Vue markup and tutorial YAML out of the rich-text editor. Collection exclusions keep the visual articles and styled interview index in separate editors without duplicate entries. Recursive browsing is enabled only for the content folders that need it, keeping theme code and public assets outside the content editor. Before enabling WYSIWYG for another page, check its complete source for HTML, Vue components, VitePress containers, and interactive frontmatter.
 
 Consult the official [configuration reference](https://pagescms.org/docs/configuration/) before adding new sections or changing the editor format.

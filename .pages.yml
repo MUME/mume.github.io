@@ -1,13 +1,93 @@
 # User guide: CMS.md
-# No fields: edit the complete Markdown source, including YAML, HTML and Vue.
+# Rich-text fields are limited to ordinary Markdown. Entries without fields
+# edit complete source, preserving HTML, Vue and interactive tutorial YAML.
 media:
   input: docs/public/assets/images
   output: /assets/images
   extensions: [png, jpg, jpeg, gif, webp, svg]
 
+settings:
+  content:
+    merge: true
+
+components:
+  markdown-body:
+    label: Content
+    type: rich-text
+    options:
+      format: markdown
+      switcher: true
+
 content:
+  - name: interviews
+    label: Interviews (visual editor)
+    type: collection
+    path: docs/community/interviews
+    format: yaml-frontmatter
+    subfolders: false
+    exclude: [index.md]
+    fields:
+      - name: body
+        component: markdown-body
+    operations:
+      rename: false
+      delete: false
+
+  - name: interview-index
+    label: Interview index (source)
+    type: file
+    path: docs/community/interviews/index.md
+    format: yaml-frontmatter
+    operations:
+      delete: false
+
+  - name: articles
+    label: Articles (visual editor)
+    type: group
+    items:
+      - name: features
+        label: MUME features
+        type: file
+        path: docs/about/features.md
+        format: yaml-frontmatter
+        fields: &article-fields
+          - name: title
+            label: Page title
+            type: string
+          - name: description
+            label: Description
+            type: text
+          - name: body
+            component: markdown-body
+        operations:
+          delete: false
+      - name: mume-viii
+        label: MUME VIII
+        type: file
+        path: docs/about/m8.md
+        format: yaml-frontmatter
+        fields: *article-fields
+        operations:
+          delete: false
+      - name: mume-ix
+        label: MUME IX
+        type: file
+        path: docs/about/m9.md
+        format: yaml-frontmatter
+        fields: *article-fields
+        operations:
+          delete: false
+      - name: mudlle-events
+        label: Mudlle events guide
+        type: file
+        path: docs/resources/events.md
+        format: yaml-frontmatter
+        fields: *article-fields
+        operations:
+          delete: false
+
   - name: pages
-    label: Main pages
+    label: Main pages (source)
     type: collection
     path: docs
     format: yaml-frontmatter
@@ -17,29 +97,28 @@ content:
       delete: false
 
   - name: about
-    label: About MUME
+    label: About MUME (source)
     type: collection
     path: docs/about
+    format: yaml-frontmatter
+    subfolders: false
+    exclude: [features.md, m8.md, m9.md]
+    operations:
+      rename: false
+      delete: false
+
+  - name: community
+    label: Community pages (source)
+    type: collection
+    path: docs/community
     format: yaml-frontmatter
     subfolders: false
     operations:
       rename: false
       delete: false
 
-  - name: community
-    label: Community and interviews
-    type: collection
-    path: docs/community
-    format: yaml-frontmatter
-    subfolders: true
-    view:
-      layout: tree
-    operations:
-      rename: false
-      delete: false
-
   - name: news
-    label: News
+    label: News (source)
     type: collection
     path: docs/news
     format: yaml-frontmatter
@@ -49,11 +128,12 @@ content:
       delete: false
 
   - name: resources
-    label: Resources and questionnaires
+    label: Resources and questionnaires (source)
     type: collection
     path: docs/resources
     format: yaml-frontmatter
     subfolders: true
+    exclude: [events.md]
     view:
       layout: tree
     operations:
@@ -61,7 +141,7 @@ content:
       delete: false
 
   - name: play
-    label: Play and tutorial chapters
+    label: Play and tutorial chapters (source)
     type: collection
     path: docs/play
     format: yaml-frontmatter
