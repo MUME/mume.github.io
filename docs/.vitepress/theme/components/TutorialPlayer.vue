@@ -1317,7 +1317,7 @@ onUnmounted(() => {
   border-radius: 20px;
   cursor: pointer;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7), 0 0 12px rgba(255, 215, 0, 0.35);
-  animation: tutPulseToast 2.2s infinite, tutStreamIn 0.25s ease-out;
+  animation: tutPulseToast 2.2s infinite;
   user-select: none;
   outline: none;
   white-space: nowrap;
