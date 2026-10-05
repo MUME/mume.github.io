@@ -1,13 +1,13 @@
 ---
 title: MUME Newbie & Beginner Survival Guide
-description: Essential beginner guides, 15-chapter interactive tutorial directory, quick command reference guide, and survival tips for new players joining Multi-Users in Middle-earth (MUME).
+description: Essential beginner guides, 16-chapter interactive tutorial directory, quick command reference guide, and survival tips for new players joining Multi-Users in Middle-earth (MUME).
 head:
   - - meta
     - property: og:title
       content: MUME Newbie & Beginner Survival Guide
   - - meta
     - property: og:description
-      content: Essential beginner guides, 15-chapter interactive tutorial directory, quick command reference guide, and survival tips for new players joining MUME.
+      content: Essential beginner guides, 16-chapter interactive tutorial directory, quick command reference guide, and survival tips for new players joining MUME.
 ---
 
 # Information for Newcomers
@@ -20,9 +20,9 @@ Oh yeah, have fun running around at night with no torch not being able to see a 
 <MumeCallout
   title="Interactive Walkthrough"
   subtitle="Start Here"
-  body="Master MUME step-by-step with Fuor the Man in our 15-chapter interactive tutorial. Complete chapters at your own pace, or test commands in the terminal."
-  actionText="Start Chapter 1: Hero Creation"
-  actionHref="/play/tutorial/1-orientation"
+  body="Master MUME step-by-step with Fuor the Man in our 16-chapter interactive tutorial. Complete chapters at your own pace, or test commands in the terminal."
+  actionText="Start Chapter 1: What is MUME?"
+  actionHref="/play/tutorial/1-welcome"
   icon="fa-terminal"
   variant="gold"
 />
@@ -35,7 +35,7 @@ Filter by category below to inspect essential MUME survival commands, syntax, an
 
 ## 2. Interactive Tutorial Chapters
 
-Jump directly into any walkthrough chapter below following **Fuor the Man** from account creation in Mandos through wild adventuring outside Fornost.
+Jump directly into any walkthrough chapter below following **Fuor the Man** from his first hour in Black Hill Village to his first steps into the wild.
 
 <TutorialChapterGrid />
 

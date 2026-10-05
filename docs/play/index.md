@@ -24,7 +24,7 @@ MUME is a rich, immersive text-based multiplayer RPG set in Tolkien's Middle-ear
   newTitle="I'm New to MUME"
   newDesc="New to text MUDs or MUME? Take our interactive walkthrough to learn movement, map navigation, combat basics, and survival tips."
   newActionText="Start Interactive Tutorial"
-  newHref="/play/tutorial/1-orientation"
+  newHref="/play/tutorial/1-welcome"
   expTitle="I'm an Experienced Player"
   expDesc="Skip straight to client connections below: MMapper Web (browser), MMapper Desktop, or Mudlet."
   expActionText="Choose Client & Play"

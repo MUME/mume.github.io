@@ -9,7 +9,7 @@ import { withBase } from 'vitepress'
 
 onMounted(() => {
   if (typeof window !== 'undefined') {
-    window.location.replace(withBase('/play/tutorial/1-orientation'))
+    window.location.replace(withBase('/play/tutorial/1-welcome'))
   }
 })
 </script>
