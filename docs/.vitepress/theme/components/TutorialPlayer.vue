@@ -7,7 +7,7 @@
   - PLAYING_BEAT: Auto-streaming narrative story beat before next step.
   - CHAPTER_COMPLETE: Final step completed, displays handover options card.
 */
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useData, useRoute, useRouter, withBase } from 'vitepress'
 import { data as rawChapters } from '../../../play/tutorial/chapters.data.js'
 import { formatInlineMarkdown } from '../utils/markdown'
@@ -151,6 +151,8 @@ function handleFullscreenChange() {
 }
 
 function handleKeydown(e: KeyboardEvent) {
+  // Input and button handlers already handled this key.
+  if (e.defaultPrevented) return
   if (e.key === 'Escape') {
     if (activeModalImage.value) {
       closeImageModal()
@@ -168,23 +170,20 @@ function handleKeydown(e: KeyboardEvent) {
     }
   }
 
-  // Handle Enter or Space during Chapter Complete state
-  if (playerState.value === PlayerState.CHAPTER_COMPLETE) {
-    if (e.key === 'Enter' || e.key === ' ') {
+  // Intercept Enter, Space, or PageDown for paging if output overflow is active
+  if (isScrollOverflowActive.value) {
+    const isInputFocused = typeof document !== 'undefined' && document.activeElement === inputEl.value
+    if ((e.key === 'PageDown' || e.key === ' ' || e.key === 'Enter') && (!isInputFocused || !entry.value.trim())) {
       e.preventDefault()
-      submit()
+      if (!isScrolling.value) pageForward()
       return
     }
   }
 
-  // Intercept Enter, Space, or PageDown for paging if output overflow is active
-  if (isScrollOverflowActive.value && !isScrolling.value) {
-    const isInputFocused = typeof document !== 'undefined' && document.activeElement === inputEl.value
-    if ((e.key === 'PageDown' || e.key === ' ' || e.key === 'Enter') && (!isInputFocused || !entry.value.trim())) {
-      e.preventDefault()
-      pageForward()
-      return
-    }
+  // Read remaining output before Enter or Space continues to the next chapter.
+  if (playerState.value === PlayerState.CHAPTER_COMPLETE && (e.key === 'Enter' || e.key === ' ')) {
+    e.preventDefault()
+    submit()
   }
 }
 
@@ -271,7 +270,7 @@ function clearAutoAdvanceTimer() {
 function focusInput() {
   if (typeof window !== 'undefined') {
     setTimeout(() => {
-      if (inputEl.value) inputEl.value.focus()
+      if (inputEl.value) inputEl.value.focus({ preventScroll: true })
     }, 50)
   }
 }
@@ -293,16 +292,16 @@ function navigateToUrl(url: string | null) {
  * Scroll log to align with the top of the newest block if it overflows,
  * ensuring large outputs (like info or long lesson text) are readable from the start.
  */
-function scrollLogToLatestBlock() {
+function scrollLogToLatestBlock(fromStart = false) {
   if (typeof window !== 'undefined') {
     setTimeout(() => {
       const container = logEl.value
       if (!container) return
 
       // For initial chapter intro load, pin scroll to top so intro is read from top to bottom
-      if (subStepIdx.value === 0 && log.value.length === 1) {
+      if (fromStart) {
         if (typeof container.scrollTo === 'function') {
-          container.scrollTo({ top: 0, behavior: 'smooth' })
+          container.scrollTo({ top: 0, behavior: 'instant' })
         } else {
           container.scrollTop = 0
         }
@@ -317,8 +316,8 @@ function scrollLogToLatestBlock() {
         const blockRect = lastBlock.getBoundingClientRect()
 
         // If block is taller than or overflows the viewport, align scroll to top of that block
-        if (blockRect.height > containerRect.height - 40 && typeof lastBlock.scrollIntoView === 'function') {
-          lastBlock.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        if (blockRect.height > containerRect.height - 40 && typeof container.scrollTo === 'function') {
+          container.scrollTo({ top: container.scrollTop + blockRect.top - containerRect.top, behavior: 'smooth' })
         } else if (typeof container.scrollTo === 'function') {
           container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
         }
@@ -391,15 +390,13 @@ function goToStep(targetIdx: number, allowAutoAdvance: boolean = true) {
   }
 
   log.value = newLog
-  scrollLogToLatestBlock()
-
   const curSub = stepsList.value[targetIdx] || null
   if (curSub && !curSub.ask && (curSub.text || curSub.response)) {
     log.value.push({
       kind: 'story',
       body: curSub.text || curSub.response
     })
-    scrollLogToLatestBlock()
+    scrollLogToLatestBlock(targetIdx === 0)
     if (allowAutoAdvance) {
       checkAndScheduleAutoAdvance()
     } else {
@@ -407,6 +404,7 @@ function goToStep(targetIdx: number, allowAutoAdvance: boolean = true) {
       focusInput()
     }
   } else {
+    scrollLogToLatestBlock(targetIdx === 0)
     playerState.value = PlayerState.AWAITING_COMMAND
     focusInput()
   }
@@ -442,7 +440,8 @@ function completeChapter() {
     title: chapterTitle.value,
     nextUrl: nextChapterUrl.value
   })
-  scrollLogToLatestBlock()
+  // Appending the handover must not move past unread lesson text.
+  nextTick(updatePagerState)
 }
 
 function advanceNext() {
@@ -531,19 +530,7 @@ function submit() {
 
   // If in Paging state or input empty while overflow is active, advance page
   if (isScrollOverflowActive.value && !raw) {
-    pageForward()
-    return
-  }
-
-  // If on a story beat step (no required `ask` command), advance beat state
-  const curStep = currentSubStep.value
-  if (curStep && !curStep.ask) {
-    entry.value = ''
-    if (isScrollOverflowActive.value) {
-      flushPager()
-    }
-    advanceSubStep()
-    focusInput()
+    if (!isScrolling.value) pageForward()
     return
   }
 
@@ -555,6 +542,18 @@ function submit() {
     } else {
       openModal()
     }
+    focusInput()
+    return
+  }
+
+  // If on a story beat step (no required `ask` command), advance beat state
+  const curStep = currentSubStep.value
+  if (curStep && !curStep.ask) {
+    entry.value = ''
+    if (isScrollOverflowActive.value) {
+      flushPager()
+    }
+    advanceSubStep()
     focusInput()
     return
   }
@@ -792,7 +791,7 @@ onUnmounted(() => {
                  'is-complete': playerState === PlayerState.CHAPTER_COMPLETE
                }">
             <!-- Mode 1: Chapter Completion State (Replaces input box with full-width completion pill button) -->
-            <button v-if="playerState === PlayerState.CHAPTER_COMPLETE"
+            <button v-if="playerState === PlayerState.CHAPTER_COMPLETE && !isScrollOverflowActive"
                     type="button"
                     class="tut-full-complete-btn"
                     @click.stop="submit()"
