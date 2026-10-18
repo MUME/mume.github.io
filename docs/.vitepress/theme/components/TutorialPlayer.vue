@@ -632,6 +632,9 @@ function submit() {
 }
 
 watch(() => route.path, () => {
+  // Navigation here is SPA, so this component is not remounted between chapters.
+  // Clear the completion flag on each chapter so a retake-then-exit is counted.
+  tutorialCompleted.value = false
   renderStepLog()
 }, { immediate: true })
 
