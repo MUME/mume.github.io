@@ -105,6 +105,15 @@ function closeModal() {
   isModalOpen.value = false
 }
 
+// Fire a GA4 event when a player leaves the tutorial early (exit_tutorial) or
+// finishes and heads to the game (tutorial_complete_play). GA is already set up in
+// the theme; this only sends a named signal with the chapter they were on.
+function trackTutorial(name: string) {
+  try {
+    ;(window as any).gtag?.('event', name, { event_category: 'tutorial', chapter: chapterNum.value })
+  } catch { /* analytics is best-effort, never block navigation */ }
+}
+
 function openImageModal(src: string, alt = '') {
   activeModalImage.value = { src, alt }
 }
@@ -699,7 +708,7 @@ onUnmounted(() => {
             <span class="tut-btn-text">{{ isExpanded ? 'Shrink' : 'Full' }}</span>
           </button>
 
-          <a :href="withBase(NEWCOMERS_URL)" class="tut-action-btn tut-exit-btn" title="Exit Tutorial to Newcomers Hub" aria-label="Exit Tutorial">
+          <a :href="withBase(NEWCOMERS_URL)" class="tut-action-btn tut-exit-btn" title="Exit Tutorial to Newcomers Hub" aria-label="Exit Tutorial" @click="trackTutorial('exit_tutorial')">
             <i class="fa fa-sign-out" aria-hidden="true"></i>
             <span class="tut-btn-text">Exit</span>
           </a>
@@ -777,7 +786,7 @@ onUnmounted(() => {
                 <p class="tut-line">You have mastered movement, equipment, stats, combat, scouting, skills, and resting in Middle-earth.</p>
 
                 <div class="tut-end-actions">
-                  <a class="tut-enter" :href="withBase(BROWSER_PLAY_URL)">Play MUME Now (Web Client) &rarr;</a>
+                  <a class="tut-enter" :href="withBase(BROWSER_PLAY_URL)" @click="trackTutorial('tutorial_complete_play')">Play MUME Now (Web Client) &rarr;</a>
                   <a class="tut-secondary-link" :href="withBase(NEWCOMERS_URL)">Explore Newcomers Guide</a>
                   <a class="tut-secondary-link" :href="withBase(PLAY_HUB_URL)">Back to Play Hub</a>
                 </div>
@@ -879,7 +888,7 @@ onUnmounted(() => {
           </p>
 
           <div class="tut-modal-buttons">
-            <a class="tut-modal-btn tut-btn-primary" :href="withBase(BROWSER_PLAY_URL)">
+            <a class="tut-modal-btn tut-btn-primary" :href="withBase(BROWSER_PLAY_URL)" @click="trackTutorial('tutorial_complete_play')">
               <i class="fa fa-gamepad" aria-hidden="true"></i> Play MUME Now (Web Client) &rarr;
             </a>
 
