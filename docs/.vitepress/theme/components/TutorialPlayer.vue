@@ -95,10 +95,14 @@ const entry = ref('')
 const isSheetOpen = ref(false)
 const isExpanded = ref(false)
 const isModalOpen = ref(false)
+const tutorialCompleted = ref(false)
 const activeModalImage = ref<{ src: string; alt: string } | null>(null)
 
 function openModal() {
   isModalOpen.value = true
+  // Reaching the end-of-tutorial modal means the player finished, so a later Exit
+  // click should not be counted as an early exit.
+  tutorialCompleted.value = true
 }
 
 function closeModal() {
@@ -111,7 +115,16 @@ function closeModal() {
 function trackTutorial(name: string) {
   try {
     ;(window as any).gtag?.('event', name, { event_category: 'tutorial', chapter: chapterNum.value })
-  } catch { /* analytics is best-effort, never block navigation */ }
+  } catch (err) {
+    // Analytics is best-effort and must never block navigation; surface it quietly.
+    console.debug('tutorial analytics event failed', name, err)
+  }
+}
+
+// The Exit control is always visible, including after completion, so only count a
+// click as an early exit when the player has not reached the end-of-tutorial screen.
+function trackExit() {
+  if (!tutorialCompleted.value) trackTutorial('exit_tutorial')
 }
 
 function openImageModal(src: string, alt = '') {
@@ -708,7 +721,7 @@ onUnmounted(() => {
             <span class="tut-btn-text">{{ isExpanded ? 'Shrink' : 'Full' }}</span>
           </button>
 
-          <a :href="withBase(NEWCOMERS_URL)" class="tut-action-btn tut-exit-btn" title="Exit Tutorial to Newcomers Hub" aria-label="Exit Tutorial" @click="trackTutorial('exit_tutorial')">
+          <a :href="withBase(NEWCOMERS_URL)" class="tut-action-btn tut-exit-btn" title="Exit Tutorial to Newcomers Hub" aria-label="Exit Tutorial" @click="trackExit()">
             <i class="fa fa-sign-out" aria-hidden="true"></i>
             <span class="tut-btn-text">Exit</span>
           </a>
@@ -786,7 +799,7 @@ onUnmounted(() => {
                 <p class="tut-line">You have mastered movement, equipment, stats, combat, scouting, skills, and resting in Middle-earth.</p>
 
                 <div class="tut-end-actions">
-                  <a class="tut-enter" :href="withBase(BROWSER_PLAY_URL)" @click="trackTutorial('tutorial_complete_play')">Play MUME Now (Web Client) &rarr;</a>
+                  <a class="tut-enter" :href="withBase(BROWSER_PLAY_URL)">Play MUME Now (Web Client) &rarr;</a>
                   <a class="tut-secondary-link" :href="withBase(NEWCOMERS_URL)">Explore Newcomers Guide</a>
                   <a class="tut-secondary-link" :href="withBase(PLAY_HUB_URL)">Back to Play Hub</a>
                 </div>
