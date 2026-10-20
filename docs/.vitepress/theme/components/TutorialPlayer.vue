@@ -95,14 +95,36 @@ const entry = ref('')
 const isSheetOpen = ref(false)
 const isExpanded = ref(false)
 const isModalOpen = ref(false)
+const tutorialCompleted = ref(false)
 const activeModalImage = ref<{ src: string; alt: string } | null>(null)
 
 function openModal() {
   isModalOpen.value = true
+  // Reaching the end-of-tutorial modal means the player finished, so a later Exit
+  // click should not be counted as an early exit.
+  tutorialCompleted.value = true
 }
 
 function closeModal() {
   isModalOpen.value = false
+}
+
+// Fire a GA4 event when a player leaves the tutorial early (exit_tutorial) or
+// finishes and heads to the game (tutorial_complete_play). GA is already set up in
+// the theme; this only sends a named signal with the chapter they were on.
+function trackTutorial(name: string) {
+  try {
+    ;(window as any).gtag?.('event', name, { event_category: 'tutorial', chapter: chapterNum.value })
+  } catch (err) {
+    // Analytics is best-effort and must never block navigation; surface it quietly.
+    console.debug('tutorial analytics event failed', name, err)
+  }
+}
+
+// The Exit control is always visible, including after completion, so only count a
+// click as an early exit when the player has not reached the end-of-tutorial screen.
+function trackExit() {
+  if (!tutorialCompleted.value) trackTutorial('exit_tutorial')
 }
 
 function openImageModal(src: string, alt = '') {
@@ -610,6 +632,9 @@ function submit() {
 }
 
 watch(() => route.path, () => {
+  // Navigation here is SPA, so this component is not remounted between chapters.
+  // Clear the completion flag on each chapter so a retake-then-exit is counted.
+  tutorialCompleted.value = false
   renderStepLog()
 }, { immediate: true })
 
@@ -699,7 +724,7 @@ onUnmounted(() => {
             <span class="tut-btn-text">{{ isExpanded ? 'Shrink' : 'Full' }}</span>
           </button>
 
-          <a :href="withBase(NEWCOMERS_URL)" class="tut-action-btn tut-exit-btn" title="Exit Tutorial to Newcomers Hub" aria-label="Exit Tutorial">
+          <a :href="withBase(NEWCOMERS_URL)" class="tut-action-btn tut-exit-btn" title="Exit Tutorial to Newcomers Hub" aria-label="Exit Tutorial" @click="trackExit()">
             <i class="fa fa-sign-out" aria-hidden="true"></i>
             <span class="tut-btn-text">Exit</span>
           </a>
@@ -879,7 +904,7 @@ onUnmounted(() => {
           </p>
 
           <div class="tut-modal-buttons">
-            <a class="tut-modal-btn tut-btn-primary" :href="withBase(BROWSER_PLAY_URL)">
+            <a class="tut-modal-btn tut-btn-primary" :href="withBase(BROWSER_PLAY_URL)" @click="trackTutorial('tutorial_complete_play')">
               <i class="fa fa-gamepad" aria-hidden="true"></i> Play MUME Now (Web Client) &rarr;
             </a>
 
